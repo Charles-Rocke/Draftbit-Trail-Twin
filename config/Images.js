@@ -3,4 +3,5 @@ export default {
   trailtwinlogo: require('../assets/images/TrailTwinLogo.jpg'),
   Avatar: require('../assets/images/Avatar.jpeg'),
   CharlieGreen3JmfENcL24MUnsplash: require('../assets/images/CharlieGreen3JmfENcL24MUnsplash.jpg'),
+  ID: require('../assets/images/ID.png'),
 };

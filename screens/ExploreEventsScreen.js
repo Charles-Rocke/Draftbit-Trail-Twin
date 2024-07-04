@@ -1,6 +1,6 @@
 import React from 'react';
-import EventCardBlock from '../components/EventCardBlock';
-import EventFilterBlock from '../components/EventFilterBlock';
+import EventCardListBlock from '../components/EventCardListBlock';
+import EventFilterAndSearchBarBlock from '../components/EventFilterAndSearchBarBlock';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
 import useWindowDimensions from '../utils/useWindowDimensions';
@@ -15,8 +15,17 @@ const ExploreEventsScreen = props => {
   const dimensions = useWindowDimensions();
 
   return (
-    <ScreenContainer hasSafeArea={false} scrollable={false}>
-      <EventFilterBlock />
+    <ScreenContainer
+      hasSafeArea={false}
+      scrollable={false}
+      hasBottomSafeArea={false}
+      hasTopSafeArea={true}
+      style={StyleSheet.applyWidth(
+        { backgroundColor: 'rgb(245, 245, 245)' },
+        dimensions.width
+      )}
+    >
+      <EventFilterAndSearchBarBlock />
       <SimpleStyleScrollView
         bounces={true}
         horizontal={false}
@@ -25,10 +34,12 @@ const ExploreEventsScreen = props => {
         showsHorizontalScrollIndicator={true}
         showsVerticalScrollIndicator={true}
         style={StyleSheet.applyWidth(
-          { marginLeft: 23, marginRight: 24 },
+          { marginLeft: 32, marginRight: 32 },
           dimensions.width
         )}
-      ></SimpleStyleScrollView>
+      >
+        <EventCardListBlock />
+      </SimpleStyleScrollView>
     </ScreenContainer>
   );
 };

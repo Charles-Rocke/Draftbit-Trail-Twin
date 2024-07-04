@@ -27,6 +27,54 @@ export const TextStyles = theme =>
     Text: { style: { color: theme.colors.strong }, props: {} },
   });
 
+export const H1Styles = theme =>
+  StyleSheet.create({
+    H1: {
+      style: { color: theme.colors.strong, fontSize: 32, fontWeight: 'bold' },
+      props: {},
+    },
+  });
+
+export const H2Styles = theme =>
+  StyleSheet.create({
+    H2: {
+      style: { color: theme.colors.strong, fontSize: 24, fontWeight: 'bold' },
+      props: {},
+    },
+  });
+
+export const H3Styles = theme =>
+  StyleSheet.create({
+    H3: {
+      style: {
+        color: theme.colors.strong,
+        fontSize: 18.72,
+        fontWeight: 'bold',
+      },
+      props: {},
+    },
+  });
+
+export const H4Styles = theme =>
+  StyleSheet.create({
+    H4: {
+      style: { color: theme.colors.strong, fontSize: 16, fontWeight: 'bold' },
+      props: {},
+    },
+  });
+
+export const H5Styles = theme =>
+  StyleSheet.create({
+    H5: {
+      style: {
+        color: theme.colors.strong,
+        fontSize: 13.28,
+        fontWeight: 'bold',
+      },
+      props: {},
+    },
+  });
+
 export const ButtonStyles = theme =>
   StyleSheet.create({
     Button: {
@@ -56,6 +104,18 @@ export const ButtonStyles = theme =>
         fontFamily: 'System',
         fontWeight: '700',
         textAlign: 'center',
+      },
+      props: {},
+    },
+  });
+
+export const H6Styles = theme =>
+  StyleSheet.create({
+    H6: {
+      style: {
+        color: theme.colors.strong,
+        fontSize: 10.72,
+        fontWeight: 'bold',
       },
       props: {},
     },
@@ -105,6 +165,18 @@ export const TextInputStyles = theme =>
         paddingLeft: 8,
         paddingRight: 8,
         paddingTop: 8,
+      },
+      props: {},
+    },
+  });
+
+export const SquareStyles = theme =>
+  StyleSheet.create({
+    Square: {
+      style: {
+        alignItems: 'center',
+        backgroundColor: theme.colors.primary,
+        justifyContent: 'center',
       },
       props: {},
     },

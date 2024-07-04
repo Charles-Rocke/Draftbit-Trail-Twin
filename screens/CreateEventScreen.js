@@ -2,14 +2,15 @@ import React from 'react';
 import * as GlobalStyles from '../GlobalStyles.js';
 import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
 import * as GlobalVariables from '../config/GlobalVariableContext';
+import eventCreated from '../global-functions/eventCreated';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
+import showAlertUtil from '../utils/showAlert';
 import useWindowDimensions from '../utils/useWindowDimensions';
 import {
   Button,
   DatePicker,
   MultiSelectPicker,
-  Picker,
   ScreenContainer,
   SimpleStyleKeyboardAwareScrollView,
   SimpleStyleScrollView,
@@ -44,6 +45,9 @@ const CreateEventScreen = props => {
     []
   );
   const [multiSelectPickerValue, setMultiSelectPickerValue] = React.useState(
+    []
+  );
+  const [multiSelectPickerValue2, setMultiSelectPickerValue2] = React.useState(
     []
   );
   const [numberInput2Value, setNumberInput2Value] = React.useState('');
@@ -99,8 +103,9 @@ line two` ) and will not work with special characters inside of quotes ( example
     <ScreenContainer
       scrollable={false}
       hasSafeArea={true}
+      hasTopSafeArea={true}
       style={StyleSheet.applyWidth(
-        { backgroundColor: theme.colors['Divider'] },
+        { backgroundColor: theme.colors['Background'] },
         dimensions.width
       )}
     >
@@ -122,7 +127,14 @@ line two` ) and will not work with special characters inside of quotes ( example
         >
           <View
             style={StyleSheet.applyWidth(
-              { flex: 1, paddingBottom: 25 },
+              {
+                gap: 32,
+                justifyContent: 'space-between',
+                marginBottom: 72,
+                marginTop: 72,
+                paddingLeft: 32,
+                paddingRight: 32,
+              },
               dimensions.width
             )}
           >
@@ -132,91 +144,15 @@ line two` ) and will not work with special characters inside of quotes ( example
               style={StyleSheet.applyWidth(
                 {
                   color: theme.colors.strong,
-                  fontFamily: 'Inter_500Medium',
-                  fontSize: 25,
-                  marginLeft: 30,
-                  marginTop: 15,
+                  fontFamily: 'Inter_300Light',
+                  fontSize: 24,
                   opacity: 0.8,
                 },
                 dimensions.width
               )}
             >
-              {'Create your event\nShare with the world'}
+              {'Create a Ride\n'}
             </Text>
-            {/* sub title */}
-            <Text
-              accessible={true}
-              style={StyleSheet.applyWidth(
-                {
-                  color: theme.colors.strong,
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 15,
-                  marginLeft: 30,
-                  marginTop: 15,
-                  opacity: 0.4,
-                },
-                dimensions.width
-              )}
-            >
-              {'Fill in a few details'}
-            </Text>
-            {/* Full Name */}
-            <View>
-              {/* Label */}
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginLeft: 30,
-                    marginTop: 35,
-                    opacity: 0.85,
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Full name'}
-              </Text>
-              {/* hostNameInput */}
-              <TextInput
-                autoCapitalize={'none'}
-                autoCorrect={true}
-                changeTextDelay={500}
-                onChangeText={newHostNameInputValue => {
-                  try {
-                    setHostNameInputV1(newHostNameInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                webShowOutline={true}
-                placeholder={'Enter your full name'}
-                placeholderTextColor={theme.colors['Light']}
-                style={StyleSheet.applyWidth(
-                  {
-                    backgroundColor: theme.colors['Custom Color'],
-                    borderBottomWidth: 1,
-                    borderColor: theme.colors['Light'],
-                    borderLeftWidth: 1,
-                    borderRadius: 12,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
-                    fontFamily: 'Inter_400Regular',
-                    height: 48,
-                    marginLeft: 30,
-                    marginRight: 30,
-                    marginTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 20,
-                    paddingRight: 8,
-                    paddingTop: 8,
-                  },
-                  dimensions.width
-                )}
-                value={hostNameInputV1}
-              />
-            </View>
             {/* Trail Name */}
             <View>
               {/* Label */}
@@ -224,10 +160,8 @@ line two` ) and will not work with special characters inside of quotes ( example
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginLeft: 30,
-                    marginTop: 25,
+                    color: theme.colors['Strong'],
+                    fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
                   dimensions.width
@@ -259,10 +193,9 @@ line two` ) and will not work with special characters inside of quotes ( example
                     borderRadius: 12,
                     borderRightWidth: 1,
                     borderTopWidth: 1,
-                    fontFamily: 'Inter_400Regular',
+                    color: theme.colors['Medium'],
+                    fontFamily: 'Inter_300Light',
                     height: 48,
-                    marginLeft: 30,
-                    marginRight: 30,
                     marginTop: 8,
                     paddingBottom: 8,
                     paddingLeft: 20,
@@ -281,10 +214,8 @@ line two` ) and will not work with special characters inside of quotes ( example
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginLeft: 30,
-                    marginTop: 25,
+                    color: theme.colors['Strong'],
+                    fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
                   dimensions.width
@@ -318,10 +249,9 @@ line two` ) and will not work with special characters inside of quotes ( example
                     borderRadius: 12,
                     borderRightWidth: 1,
                     borderTopWidth: 1,
-                    fontFamily: 'Inter_400Regular',
+                    color: theme.colors['Medium'],
+                    fontFamily: 'Inter_300Light',
                     height: 100,
-                    marginLeft: 30,
-                    marginRight: 30,
                     marginTop: 8,
                     paddingBottom: 8,
                     paddingLeft: 20,
@@ -334,20 +264,15 @@ line two` ) and will not work with special characters inside of quotes ( example
               />
             </View>
             {/* Date */}
-            <View
-              style={StyleSheet.applyWidth(
-                { marginLeft: 30, marginRight: 30 },
-                dimensions.width
-              )}
-            >
+            <View>
               {/* Label */}
               <Text
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginTop: 25,
+                    color: theme.colors['Strong'],
+                    fontFamily: 'Inter_300Light',
+                    fontSize: 14,
                     opacity: 0.85,
                   },
                   dimensions.width
@@ -390,6 +315,8 @@ line two` ) and will not work with special characters inside of quotes ( example
                     backgroundColor: theme.colors['Custom Color'],
                     borderColor: theme.colors['Light'],
                     borderRadius: 12,
+                    color: theme.colors['Medium'],
+                    fontFamily: 'Inter_300Light',
                     marginTop: 8,
                     paddingLeft: 5,
                     paddingRight: 5,
@@ -400,20 +327,14 @@ line two` ) and will not work with special characters inside of quotes ( example
               />
             </View>
             {/* Start Time */}
-            <View
-              style={StyleSheet.applyWidth(
-                { marginLeft: 30, marginRight: 30 },
-                dimensions.width
-              )}
-            >
+            <View>
               {/* Label */}
               <Text
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginTop: 25,
+                    color: theme.colors['Strong'],
+                    fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
                   dimensions.width
@@ -444,6 +365,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                     backgroundColor: theme.colors['Custom Color'],
                     borderColor: theme.colors['Light'],
                     borderRadius: 12,
+                    color: theme.colors['Medium'],
                     marginTop: 8,
                     paddingLeft: 5,
                     paddingRight: 5,
@@ -461,15 +383,13 @@ line two` ) and will not work with special characters inside of quotes ( example
                 style={StyleSheet.applyWidth(
                   {
                     color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginLeft: 30,
-                    marginTop: 25,
+                    fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Party Size'}
+                {'Max Party Size'}
               </Text>
               {/* partySizeInput */}
               <TextInput
@@ -494,10 +414,9 @@ line two` ) and will not work with special characters inside of quotes ( example
                       backgroundColor: theme.colors['Custom Color'],
                       borderColor: theme.colors['Light'],
                       borderRadius: 12,
-                      fontFamily: 'Inter_400Regular',
+                      color: theme.colors['Medium'],
+                      fontFamily: 'Inter_300Light',
                       height: 48,
-                      marginLeft: 30,
-                      marginRight: 30,
                       marginTop: 8,
                       paddingLeft: 20,
                     }
@@ -514,10 +433,8 @@ line two` ) and will not work with special characters inside of quotes ( example
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginLeft: 30,
-                    marginTop: 25,
+                    color: theme.colors['Strong'],
+                    fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
                   dimensions.width
@@ -548,10 +465,9 @@ line two` ) and will not work with special characters inside of quotes ( example
                       backgroundColor: theme.colors['Custom Color'],
                       borderColor: theme.colors['Light'],
                       borderRadius: 12,
-                      fontFamily: 'Inter_400Regular',
+                      color: theme.colors['Medium'],
+                      fontFamily: 'Inter_300Light',
                       height: 48,
-                      marginLeft: 30,
-                      marginRight: 30,
                       marginTop: 8,
                       paddingLeft: 20,
                     }
@@ -561,154 +477,164 @@ line two` ) and will not work with special characters inside of quotes ( example
                 value={invitesInputIntV1}
               />
             </View>
-            {/* Event Tags */}
+            {/* Tags View */}
             <View
               style={StyleSheet.applyWidth(
-                { marginLeft: 30, marginRight: 30, position: 'relative' },
-                dimensions.width
-              )}
-            >
-              {/* Label */}
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_400Regular',
-                    marginTop: 25,
-                    opacity: 0.85,
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Tags (Optional)'}
-              </Text>
-              {/* tagsInput */}
-              <MultiSelectPicker
-                dropDownBackgroundColor={theme.colors.background}
-                dropDownBorderColor={theme.colors.divider}
-                dropDownBorderRadius={8}
-                dropDownBorderWidth={1}
-                dropDownTextColor={theme.colors.strong}
-                iconSize={24}
-                leftIconMode={'inset'}
-                onValueChange={newTagsInputValue => {
-                  try {
-                    setTagsInputV1(newTagsInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                selectedIconColor={theme.colors.strong}
-                selectedIconName={'Feather/check'}
-                selectedIconSize={20}
-                type={'solid'}
-                autoDismissKeyboard={true}
-                options={[
-                  { label: '🟤 dig party', value: 'dig party' },
-                  { label: '🔵 group ride', value: 'group ride' },
-                  { label: '🟣 race', value: 'race' },
-                  { label: '⚫ jump session', value: 'jump session' },
-                  { label: '🟠 enduro', value: 'enduro' },
-                  { label: '🟢 Beginner Friendly', value: 'Beginner Friendly' },
-                  { label: '🟡 Technical', value: 'Technical' },
-                ]}
-                placeholder={'Select tags'}
-                rightIconName={'AntDesign/down'}
-                style={StyleSheet.applyWidth(
-                  {
-                    borderColor: theme.colors['Light'],
-                    borderRadius: 12,
-                    height: '100%',
-                    marginTop: 8,
-                    paddingLeft: 5,
-                    paddingRight: 5,
-                  },
-                  dimensions.width
-                )}
-                value={tagsInputV1}
-              />
-            </View>
-          </View>
-          {/* Confirm */}
-          <View
-            style={StyleSheet.applyWidth(
-              {
-                flex: 2,
-                flexDirection: 'column',
-                justifyContent: 'flex-end',
-                marginTop: 45,
-                position: 'relative',
-              },
-              dimensions.width
-            )}
-          >
-            {/* Create Event Button */}
-            <Button
-              iconPosition={'left'}
-              onPress={() => {
-                const handler = async () => {
-                  console.log('Create Event Button ON_PRESS Start');
-                  let error = null;
-                  try {
-                    console.log('Start ON_PRESS:0 FETCH_REQUEST');
-                    (
-                      await supabaseEventsCreateEventPOST.mutateAsync({
-                        addressInputV1: addressInputV1,
-                        dateInputV1: convertDateToCustomFormat(dateInputV1),
-                        eventNameInputV1: eventNameInputV1,
-                        eventTypeInputV1: eventTypeInputV1,
-                        hostNameInputV1: hostNameInputV1,
-                        invitesInputV1: invitesInputIntV1,
-                        partySizeInputV1: partySizeInputV1,
-                        startTimeInputV1:
-                          convertTimeToCustomFormat(startTimeInputV1),
-                        tagsInputV1: tagsInputV1,
-                      })
-                    )?.json;
-                    console.log('Complete ON_PRESS:0 FETCH_REQUEST');
-                    console.log('Start ON_PRESS:1 CONSOLE_LOG');
-                    console.log(
-                      hostNameInputV1,
-                      invitesInputArrayV1,
-                      convertDateToCustomFormat(dateInputV1),
-                      tagsInputV1,
-                      convertTimeToCustomFormat(startTimeInputV1)
-                    );
-                    console.log('Complete ON_PRESS:1 CONSOLE_LOG');
-                    console.log('Start ON_PRESS:2 NAVIGATE');
-                    navigation.navigate('BottomTabNavigator', {
-                      screen: 'ExploreEventsScreen',
-                    });
-                    console.log('Complete ON_PRESS:2 NAVIGATE');
-                  } catch (err) {
-                    console.error(err);
-                    error = err.message ?? err;
-                  }
-                  console.log(
-                    'Create Event Button ON_PRESS Complete',
-                    error ? { error } : 'no error'
-                  );
-                };
-                handler();
-              }}
-              style={StyleSheet.applyWidth(
                 {
-                  backgroundColor: theme.colors['Primary'],
-                  borderRadius: 12,
-                  color: theme.colors['Custom Color'],
-                  fontFamily: 'Inter_500Medium',
-                  fontSize: 16,
-                  height: 52,
-                  marginBottom: 30,
-                  marginLeft: 30,
-                  marginRight: 30,
-                  textAlign: 'center',
+                  alignItems: 'stretch',
+                  flex: 1,
+                  justifyContent: 'space-evenly',
                 },
                 dimensions.width
               )}
-              title={'Confirm '}
-            />
+            >
+              {/* Event Tags */}
+              <View
+                style={StyleSheet.applyWidth(
+                  { flex: 1, marginBottom: 24, position: 'relative' },
+                  dimensions.width
+                )}
+              >
+                {/* Label */}
+                <Text
+                  accessible={true}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors['Strong'],
+                      fontFamily: 'Inter_300Light',
+                      opacity: 0.85,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {'Tags (Optional)'}
+                </Text>
+                <MultiSelectPicker
+                  autoDismissKeyboard={true}
+                  dropDownBackgroundColor={theme.colors.background}
+                  dropDownBorderColor={theme.colors.divider}
+                  dropDownBorderRadius={8}
+                  dropDownBorderWidth={1}
+                  dropDownTextColor={theme.colors.strong}
+                  iconSize={24}
+                  leftIconMode={'inset'}
+                  onValueChange={newMultiSelectPickerValue => {
+                    const pickerValue = newMultiSelectPickerValue;
+                    try {
+                      setMultiSelectPickerValue2(newMultiSelectPickerValue);
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                  placeholder={'Select an option'}
+                  selectedIconColor={theme.colors.strong}
+                  selectedIconName={'Feather/check'}
+                  selectedIconSize={20}
+                  type={'solid'}
+                  options={[
+                    { label: '🟤 dig party', value: 'dig party' },
+                    { label: '🔵 group ride', value: 'group ride' },
+                    { label: '🟣 race', value: 'race' },
+                    { label: '⚫ jump session', value: 'jump session' },
+                    { label: '🟠 enduro', value: 'enduro' },
+                    {
+                      label: '🟢 Beginner Friendly',
+                      value: 'Beginner Friendly',
+                    },
+                    { label: '🟡 Technical', value: 'Technical' },
+                  ]}
+                  style={StyleSheet.applyWidth(
+                    {
+                      backgroundColor: theme.colors['Surface'],
+                      color: theme.colors['Medium'],
+                      fontFamily: 'Inter_300Light',
+                      position: 'relative',
+                    },
+                    dimensions.width
+                  )}
+                  value={multiSelectPickerValue2}
+                />
+              </View>
+            </View>
+            {/* Confirm Button View */}
+            <View>
+              {/* Create Event Button */}
+              <Button
+                iconPosition={'left'}
+                onPress={() => {
+                  const handler = async () => {
+                    console.log('Create Event Button ON_PRESS Start');
+                    let error = null;
+                    try {
+                      console.log('Start ON_PRESS:0 FETCH_REQUEST');
+                      (
+                        await supabaseEventsCreateEventPOST.mutateAsync({
+                          addressInputV1: addressInputV1,
+                          dateInputV1: convertDateToCustomFormat(dateInputV1),
+                          eventNameInputV1: eventNameInputV1,
+                          eventTypeInputV1: eventTypeInputV1,
+                          hostNameInputV1: hostNameInputV1,
+                          invitesInputV1: invitesInputIntV1,
+                          partySizeInputV1: partySizeInputV1,
+                          startTimeInputV1:
+                            convertTimeToCustomFormat(startTimeInputV1),
+                          tagsInputV1: tagsInputV1,
+                        })
+                      )?.json;
+                      console.log('Complete ON_PRESS:0 FETCH_REQUEST');
+                      console.log('Start ON_PRESS:1 CONSOLE_LOG');
+                      console.log(
+                        hostNameInputV1,
+                        invitesInputArrayV1,
+                        convertDateToCustomFormat(dateInputV1),
+                        tagsInputV1,
+                        convertTimeToCustomFormat(startTimeInputV1)
+                      );
+                      console.log('Complete ON_PRESS:1 CONSOLE_LOG');
+                      console.log('Start ON_PRESS:2 NAVIGATE');
+                      navigation.navigate('BottomTabNavigator', {
+                        screen: 'ExploreEventsScreen',
+                      });
+                      console.log('Complete ON_PRESS:2 NAVIGATE');
+                      console.log('Start ON_PRESS:3 CUSTOM_FUNCTION');
+                      await eventCreated('new_event_created');
+                      console.log('Complete ON_PRESS:3 CUSTOM_FUNCTION');
+                      console.log('Start ON_PRESS:4 CONSOLE_LOG');
+                      console.log(eventCreated('"new_event"created'));
+                      console.log('Complete ON_PRESS:4 CONSOLE_LOG');
+                      console.log('Start ON_PRESS:5 SHOW_ALERT');
+                      showAlertUtil({
+                        title: 'Success',
+                        message: 'You successfully created an event!',
+                        buttonText: 'Ok',
+                      });
+                      console.log('Complete ON_PRESS:5 SHOW_ALERT');
+                    } catch (err) {
+                      console.error(err);
+                      error = err.message ?? err;
+                    }
+                    console.log(
+                      'Create Event Button ON_PRESS Complete',
+                      error ? { error } : 'no error'
+                    );
+                  };
+                  handler();
+                }}
+                style={StyleSheet.applyWidth(
+                  {
+                    backgroundColor: theme.colors['Custom Color_38'],
+                    borderRadius: 12,
+                    color: theme.colors['Custom Color'],
+                    fontFamily: 'Inter_500Medium',
+                    fontSize: 16,
+                    height: 52,
+                    textAlign: 'center',
+                  },
+                  dimensions.width
+                )}
+                title={'Confirm '}
+              />
+            </View>
           </View>
         </SimpleStyleScrollView>
       </SimpleStyleKeyboardAwareScrollView>

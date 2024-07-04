@@ -11,9 +11,11 @@ import React from 'react';
 import Breakpoints from './utils/Breakpoints';
 import useWindowDimensions from './utils/useWindowDimensions';
 
+import AllUsersScreen from './screens/AllUsersScreen';
 import CreateEventScreen from './screens/CreateEventScreen';
 import EventDetailsScreen from './screens/EventDetailsScreen';
 import ExploreEventsScreen from './screens/ExploreEventsScreen';
+import JoinEventScreen from './screens/JoinEventScreen';
 import SplashScreen from './screens/SplashScreen';
 
 const Stack = createStackNavigator();
@@ -41,11 +43,16 @@ function BottomTabNavigator() {
   return (
     <Tab.Navigator
       initialRouteName="ExploreEventsScreen"
+      backBehavior="history"
       screenOptions={({ navigation }) => ({
         headerBackImage:
           Platform.OS === 'android' ? DefaultAndroidBackIcon : null,
         headerShown: false,
-        tabBarStyle: { borderTopColor: 'transparent' },
+        tabBarActiveTintColor: theme.colors['Custom Color_38'],
+        tabBarStyle: {
+          backgroundColor: theme.colors['Background'],
+          borderTopColor: theme.colors['Divider'],
+        },
       })}
     >
       <Tab.Screen
@@ -53,11 +60,13 @@ function BottomTabNavigator() {
         component={ExploreEventsScreen}
         options={({ navigation }) => ({
           headerShown: false,
+          headerTitle: 'Explore Events',
+          headerTitleAlign: 'center',
           tabBarIcon: ({ focused, color }) => (
             <Icon
               name="Feather/map-pin"
               size={25}
-              color={focused ? color : color}
+              color={focused ? theme.colors['Custom Color_38'] : color}
             />
           ),
           tabBarLabel: 'Explore Events',
@@ -74,7 +83,7 @@ function BottomTabNavigator() {
             <Icon
               name="Feather/plus-circle"
               size={25}
-              color={focused ? color : color}
+              color={focused ? theme.colors['Custom Color_38'] : color}
             />
           ),
           tabBarLabel: 'Create Event',
@@ -98,6 +107,7 @@ export default function RootAppNavigator() {
       linking={LinkingConfiguration}
     >
       <Stack.Navigator
+        initialRouteName="BottomTabNavigator"
         screenOptions={({ navigation }) => ({
           headerBackImage:
             Platform.OS === 'android' ? DefaultAndroidBackIcon : null,
@@ -114,12 +124,52 @@ export default function RootAppNavigator() {
           name="EventDetailsScreen"
           component={EventDetailsScreen}
           options={({ navigation }) => ({
+            headerLeft: ({ tintColor, canGoBack }) =>
+              canGoBack ? (
+                <Touchable
+                  style={[styles.headerContainer, styles.headerContainerLeft]}
+                  onPress={() => {
+                    try {
+                      navigation.goBack();
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                >
+                  <Icon
+                    name="AntDesign/left"
+                    size={Platform.OS === 'ios' ? 21 : 24}
+                    color={tintColor}
+                    style={[styles.headerIcon, styles.headerIconLeft]}
+                  />
+                  <View style={styles.headerLabelWrapper}>
+                    <Text style={[styles.headerLabel]}>Back</Text>
+                  </View>
+                </Touchable>
+              ) : null,
             title: 'Event Details',
+          })}
+        />
+        <Stack.Screen
+          name="JoinEventScreen"
+          component={JoinEventScreen}
+          options={({ navigation }) => ({
+            title: 'Join Event',
+          })}
+        />
+        <Stack.Screen
+          name="AllUsersScreen"
+          component={AllUsersScreen}
+          options={({ navigation }) => ({
+            title: 'All Users',
           })}
         />
         <Stack.Screen
           name="BottomTabNavigator"
           component={BottomTabNavigator}
+          options={({ navigation }) => ({
+            headerShown: false,
+          })}
         />
       </Stack.Navigator>
     </NavigationContainer>
@@ -152,4 +202,6 @@ const styles = StyleSheet.create({
     },
   }),
   headerIconLeft: Platform.select({ ios: { marginRight: 6 } }),
+  headerLabel: { fontSize: 17, letterSpacing: 0.35 },
+  headerLabelWrapper: { flexDirection: 'row', alignItems: 'flex-start' },
 });
