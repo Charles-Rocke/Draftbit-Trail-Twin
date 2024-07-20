@@ -2,6 +2,8 @@ import * as StyleSheet from './utils/StyleSheet';
 
 import Breakpoints from './utils/Breakpoints';
 
+import palettes from './themes/palettes';
+
 export const ImageStyles = theme =>
   StyleSheet.create({
     Image: { style: { height: 100, width: 100 }, props: {} },
@@ -12,7 +14,7 @@ export const CircleStyles = theme =>
     Circle: {
       style: {
         alignItems: 'center',
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.branding.primary,
         justifyContent: 'center',
       },
       props: {},
@@ -24,13 +26,17 @@ export const DividerStyles = theme =>
 
 export const TextStyles = theme =>
   StyleSheet.create({
-    Text: { style: { color: theme.colors.strong }, props: {} },
+    Text: { style: { color: theme.colors.text.strong }, props: {} },
   });
 
 export const H1Styles = theme =>
   StyleSheet.create({
     H1: {
-      style: { color: theme.colors.strong, fontSize: 32, fontWeight: 'bold' },
+      style: {
+        color: theme.colors.text.strong,
+        fontSize: 32,
+        fontWeight: 'bold',
+      },
       props: {},
     },
   });
@@ -38,7 +44,11 @@ export const H1Styles = theme =>
 export const H2Styles = theme =>
   StyleSheet.create({
     H2: {
-      style: { color: theme.colors.strong, fontSize: 24, fontWeight: 'bold' },
+      style: {
+        color: theme.colors.text.strong,
+        fontSize: 24,
+        fontWeight: 'bold',
+      },
       props: {},
     },
   });
@@ -47,7 +57,7 @@ export const H3Styles = theme =>
   StyleSheet.create({
     H3: {
       style: {
-        color: theme.colors.strong,
+        color: theme.colors.text.strong,
         fontSize: 18.72,
         fontWeight: 'bold',
       },
@@ -58,7 +68,11 @@ export const H3Styles = theme =>
 export const H4Styles = theme =>
   StyleSheet.create({
     H4: {
-      style: { color: theme.colors.strong, fontSize: 16, fontWeight: 'bold' },
+      style: {
+        color: theme.colors.text.strong,
+        fontSize: 16,
+        fontWeight: 'bold',
+      },
       props: {},
     },
   });
@@ -67,7 +81,7 @@ export const H5Styles = theme =>
   StyleSheet.create({
     H5: {
       style: {
-        color: theme.colors.strong,
+        color: theme.colors.text.strong,
         fontSize: 13.28,
         fontWeight: 'bold',
       },
@@ -79,7 +93,7 @@ export const ButtonStyles = theme =>
   StyleSheet.create({
     Button: {
       style: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.branding.primary,
         borderRadius: 8,
         fontFamily: 'System',
         fontWeight: '700',
@@ -89,7 +103,7 @@ export const ButtonStyles = theme =>
     },
     'Sign Up': {
       style: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.branding.primary,
         borderRadius: 8,
         fontFamily: 'System',
         fontWeight: '700',
@@ -99,7 +113,7 @@ export const ButtonStyles = theme =>
     },
     'Upload Photo': {
       style: {
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.branding.primary,
         borderRadius: 8,
         fontFamily: 'System',
         fontWeight: '700',
@@ -113,7 +127,7 @@ export const H6Styles = theme =>
   StyleSheet.create({
     H6: {
       style: {
-        color: theme.colors.strong,
+        color: theme.colors.text.strong,
         fontSize: 10.72,
         fontWeight: 'bold',
       },
@@ -126,7 +140,7 @@ export const TextInputStyles = theme =>
     'Age Input': {
       style: {
         borderBottomWidth: 1,
-        borderColor: theme.colors.divider,
+        borderColor: theme.colors.border.brand,
         borderLeftWidth: 1,
         borderRadius: 8,
         borderRightWidth: 1,
@@ -141,7 +155,7 @@ export const TextInputStyles = theme =>
     'Name Input': {
       style: {
         borderBottomWidth: 1,
-        borderColor: theme.colors.divider,
+        borderColor: theme.colors.border.brand,
         borderLeftWidth: 1,
         borderRadius: 8,
         borderRightWidth: 1,
@@ -156,7 +170,7 @@ export const TextInputStyles = theme =>
     'Text Input': {
       style: {
         borderBottomWidth: 1,
-        borderColor: theme.colors.divider,
+        borderColor: theme.colors.border.brand,
         borderLeftWidth: 1,
         borderRadius: 8,
         borderRightWidth: 1,
@@ -175,7 +189,7 @@ export const SquareStyles = theme =>
     Square: {
       style: {
         alignItems: 'center',
-        backgroundColor: theme.colors.primary,
+        backgroundColor: theme.colors.branding.primary,
         justifyContent: 'center',
       },
       props: {},
@@ -193,7 +207,7 @@ export const NumberInputStyles = theme =>
     'Number Input': {
       style: {
         borderBottomWidth: 1,
-        borderColor: theme.colors.divider,
+        borderColor: theme.colors.border.brand,
         borderLeftWidth: 1,
         borderRadius: 8,
         borderRightWidth: 1,

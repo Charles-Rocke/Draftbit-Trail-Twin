@@ -1,28 +1,91 @@
 import React from 'react';
 import * as GlobalStyles from '../GlobalStyles.js';
 import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
+import * as GlobalVariables from '../config/GlobalVariableContext';
 import Images from '../config/Images';
+import deleteEvent from '../global-functions/deleteEvent';
+import formatDate from '../global-functions/formatDate';
+import formatTotalRiders from '../global-functions/formatTotalRiders';
+import isPastEvent from '../global-functions/isPastEvent';
+import palettes from '../themes/palettes';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
 import useWindowDimensions from '../utils/useWindowDimensions';
 import {
   Button,
-  Icon,
   SimpleStyleFlatList,
   Touchable,
   withTheme,
 } from '@draftbit/ui';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Image, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  Text,
+  View,
+} from 'react-native';
 import { Fetch } from 'react-request';
 
 const EventCardListBlock = props => {
   const { theme } = props;
   const dimensions = useWindowDimensions();
   const navigation = useNavigation();
+  const Constants = GlobalVariables.useValues();
+  const Variables = Constants;
+  const setGlobalVariableValue = GlobalVariables.useSetValue();
+  const [refreshingxT0hVDb1, setRefreshingxT0hVDb1] = React.useState(false);
+  // Filters events based on the search query
+  const filterEvents = (Variables, setGlobalVariableValue, data) => {
+    // Function to filter and sort data based on input term
+    // function filterAndSortData(inputTerm) {
+    const filteredData = data.filter(item => {
+      // Modify conditions according to your search criteria
+      console.log(data);
+      return item.address
+        .toLowerCase()
+        .includes(Variables.searchAndFilterQuery.toLowerCase());
+    });
+
+    //set screen variable 'search_is_empty' default to 'false'
+    // setSearch_is_empty(false);
+
+    // // Check if the filtered data is empty
+    // if (filteredData.length === 0) {
+    //   setSearch_is_empty(true);
+    // }
+
+    // Sort the filtered data (if needed)
+    // Example: sorting by first name
+    filteredData.sort((a, b) => {
+      if (a.address < b.address) return -1;
+      if (a.address > b.address) return 1;
+      return 0;
+    });
+
+    return filteredData;
+  };
 
   return (
-    <SupabaseEventsApi.FetchGetEventsGET select={'*'}>
+    <SupabaseEventsApi.FetchGetEventsGET
+      handlers={{
+        onData: fetchData => {
+          const handler = async () => {
+            try {
+              const isPastEvent = isPastEvent(fetchData?.date);
+              if (isPastEvent) {
+                await deleteEvent(undefined);
+              } else {
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          };
+          handler();
+        },
+      }}
+      select={'*'}
+    >
       {({ loading, error, data, refetchGetEvents }) => {
         const fetchData = data?.json;
         if (loading) {
@@ -45,6 +108,25 @@ const EventCardListBlock = props => {
             nestedScrollEnabled={false}
             numColumns={1}
             onEndReachedThreshold={0.5}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshingxT0hVDb1}
+                onRefresh={() => {
+                  try {
+                    setRefreshingxT0hVDb1(true);
+                    if (new Date() ? undefined : undefined) {
+                      isPastEvent(undefined);
+                    }
+                    /* 'Run a Custom Function' action requires configuration: choose a custom function */ setRefreshingxT0hVDb1(
+                      false
+                    );
+                  } catch (err) {
+                    console.error(err);
+                    setRefreshingxT0hVDb1(false);
+                  }
+                }}
+              />
+            }
             renderItem={({ item, index }) => {
               const listData = item;
               return (
@@ -52,16 +134,17 @@ const EventCardListBlock = props => {
                   style={StyleSheet.applyWidth(
                     {
                       alignItems: 'stretch',
-                      backgroundColor: 'rgb(245, 245, 245)',
-                      borderColor: theme.colors['Divider'],
-                      borderRadius: 8,
-                      borderWidth: 1,
-                      marginBottom: 72,
+                      backgroundColor: '"rgb(253, 253, 245)"',
+                      borderColor: theme.colors.border.brand,
+                      borderRadius: 12,
+                      borderWidth: 0,
+                      marginBottom: 48,
                       overflow: 'hidden',
                     },
                     dimensions.width
                   )}
                 >
+                  {/* Fetch component: no endpoint configured */ null}
                   <Touchable>
                     <Image
                       resizeMode={'cover'}
@@ -70,7 +153,7 @@ const EventCardListBlock = props => {
                       style={StyleSheet.applyWidth(
                         StyleSheet.compose(
                           GlobalStyles.ImageStyles(theme)['Image'].style,
-                          { borderRadius: 8, height: 240, width: '100%' }
+                          { borderRadius: 12, height: 300, width: '100%' }
                         ),
                         dimensions.width
                       )}
@@ -80,10 +163,7 @@ const EventCardListBlock = props => {
                         {
                           alignItems: 'flex-start',
                           alignSelf: 'center',
-                          marginBottom: 32,
-                          marginTop: 32,
-                          paddingLeft: 32,
-                          paddingRight: 32,
+                          marginTop: 12,
                           width: '100%',
                         },
                         dimensions.width
@@ -93,62 +173,212 @@ const EventCardListBlock = props => {
                       <View
                         style={StyleSheet.applyWidth(
                           {
-                            alignItems: 'center',
+                            alignContent: 'center',
+                            alignItems: 'stretch',
+                            alignSelf: 'auto',
                             flexDirection: 'row',
+                            gap: 0,
                             justifyContent: 'space-between',
-                            marginBottom: 8,
+                            marginBottom: 1,
+                            position: 'relative',
+                            width: '100%',
                           },
                           dimensions.width
                         )}
                       >
-                        <Text
-                          accessible={true}
-                          {...GlobalStyles.TextStyles(theme)['Text'].props}
+                        <View>
+                          <>
+                            {!listData?.event_name ? null : (
+                              <Text
+                                accessible={true}
+                                {...GlobalStyles.TextStyles(theme)['Text']
+                                  .props}
+                                style={StyleSheet.applyWidth(
+                                  StyleSheet.compose(
+                                    GlobalStyles.TextStyles(theme)['Text']
+                                      .style,
+                                    {
+                                      fontFamily: 'Inter_400Regular',
+                                      fontSize: 16,
+                                    }
+                                  ),
+                                  dimensions.width
+                                )}
+                              >
+                                {listData?.event_name}
+                              </Text>
+                            )}
+                          </>
+                        </View>
+                        {/* Riders View */}
+                        <View
                           style={StyleSheet.applyWidth(
-                            StyleSheet.compose(
-                              GlobalStyles.TextStyles(theme)['Text'].style,
-                              { fontFamily: 'Inter_300Light', fontSize: 24 }
-                            ),
+                            {
+                              alignItems: 'center',
+                              flexDirection: 'row',
+                              justifyContent: 'flex-start',
+                              position: 'relative',
+                            },
                             dimensions.width
                           )}
                         >
-                          {listData?.event_name}
-                        </Text>
+                          <SupabaseEventsApi.FetchGetAttendeesByEventIdGET
+                            eventId={listData?.id}
+                            handlers={{
+                              onData: fetchData => {
+                                try {
+                                  const num_attendees = fetchData?.length;
+                                  const formattedTotalRiders =
+                                    formatTotalRiders(num_attendees);
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              },
+                            }}
+                            select={'*'}
+                          >
+                            {({
+                              loading,
+                              error,
+                              data,
+                              refetchGetAttendeesByEventId,
+                            }) => {
+                              const fetchData = data?.json;
+                              if (loading) {
+                                return <ActivityIndicator />;
+                              }
+
+                              if (
+                                error ||
+                                data?.status < 200 ||
+                                data?.status >= 300
+                              ) {
+                                return <ActivityIndicator />;
+                              }
+
+                              return (
+                                <>
+                                  {/* Riders Text */}
+                                  <Text
+                                    accessible={true}
+                                    ellipsizeMode={'tail'}
+                                    numberOfLines={2}
+                                    style={StyleSheet.applyWidth(
+                                      {
+                                        color: palettes.Brand['Secondary Text'],
+                                        fontFamily: 'Inter_300Light',
+                                        fontSize: 12,
+                                        lineHeight: 24,
+                                      },
+                                      dimensions.width
+                                    )}
+                                  >
+                                    {formatTotalRiders(fetchData?.length)}
+                                    {' Riders'}
+                                  </Text>
+                                </>
+                              );
+                            }}
+                          </SupabaseEventsApi.FetchGetAttendeesByEventIdGET>
+                        </View>
                       </View>
-                      {/* Location and Trail View */}
+                      {/* Trail View */}
                       <View
                         style={StyleSheet.applyWidth(
                           {
                             alignItems: 'center',
                             flexDirection: 'row',
-                            marginBottom: 8,
+                            marginBottom: 1,
                           },
                           dimensions.width
                         )}
                       >
-                        {/* Location Icon */}
-                        <Icon
-                          color={theme.colors['Strong']}
-                          name={'EvilIcons/location'}
-                          size={20}
-                          style={StyleSheet.applyWidth(
-                            {
-                              backgroundColor: 'rgb(255, 255, 255)',
-                              marginRight: 8,
-                            },
-                            dimensions.width
-                          )}
-                        />
-                        {/* Location Text */}
+                        <SupabaseEventsApi.FetchGetTrailNamesGET
+                          id={listData?.id}
+                          trail_names={'trail_names'}
+                        >
+                          {({ loading, error, data, refetchGetTrailNames }) => {
+                            const fetchData = data?.json;
+                            if (loading) {
+                              return <ActivityIndicator />;
+                            }
+
+                            if (
+                              error ||
+                              data?.status < 200 ||
+                              data?.status >= 300
+                            ) {
+                              return <ActivityIndicator />;
+                            }
+
+                            return (
+                              <SimpleStyleFlatList
+                                data={fetchData}
+                                horizontal={false}
+                                inverted={false}
+                                keyExtractor={(listData, index) =>
+                                  listData?.id ??
+                                  listData?.uuid ??
+                                  index.toString()
+                                }
+                                keyboardShouldPersistTaps={'never'}
+                                listKey={JSON.stringify(fetchData)}
+                                nestedScrollEnabled={false}
+                                numColumns={1}
+                                onEndReachedThreshold={0.5}
+                                renderItem={({ item, index }) => {
+                                  const listData = item;
+                                  return (
+                                    <>
+                                      {/* Trails Text */}
+                                      <Text
+                                        accessible={true}
+                                        ellipsizeMode={'tail'}
+                                        numberOfLines={2}
+                                        style={StyleSheet.applyWidth(
+                                          {
+                                            color:
+                                              palettes.Brand['Secondary Text'],
+                                            fontFamily: 'Inter_300Light',
+                                            fontSize: 12,
+                                            lineHeight: 24,
+                                          },
+                                          dimensions.width
+                                        )}
+                                      >
+                                        {listData?.trail_names}
+                                      </Text>
+                                    </>
+                                  );
+                                }}
+                                showsHorizontalScrollIndicator={true}
+                                showsVerticalScrollIndicator={true}
+                              />
+                            );
+                          }}
+                        </SupabaseEventsApi.FetchGetTrailNamesGET>
+                      </View>
+                      {/* Address View */}
+                      <View
+                        style={StyleSheet.applyWidth(
+                          {
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            marginBottom: 1,
+                          },
+                          dimensions.width
+                        )}
+                      >
+                        {/* Address Text */}
                         <Text
                           accessible={true}
                           ellipsizeMode={'tail'}
                           numberOfLines={2}
                           style={StyleSheet.applyWidth(
                             {
-                              color: theme.colors['Medium'],
+                              color: palettes.Brand['Secondary Text'],
                               fontFamily: 'Inter_300Light',
-                              fontSize: 14,
+                              fontSize: 12,
                               lineHeight: 24,
                             },
                             dimensions.width
@@ -163,24 +393,11 @@ const EventCardListBlock = props => {
                           {
                             alignItems: 'center',
                             flexDirection: 'row',
-                            marginBottom: 8,
+                            marginBottom: 1,
                           },
                           dimensions.width
                         )}
                       >
-                        {/* Date Icon */}
-                        <Icon
-                          color={theme.colors['Strong']}
-                          name={'AntDesign/calendar'}
-                          size={20}
-                          style={StyleSheet.applyWidth(
-                            {
-                              backgroundColor: 'rgb(255, 255, 255)',
-                              marginRight: 8,
-                            },
-                            dimensions.width
-                          )}
-                        />
                         {/* Date Text */}
                         <Text
                           accessible={true}
@@ -188,59 +405,17 @@ const EventCardListBlock = props => {
                           numberOfLines={2}
                           style={StyleSheet.applyWidth(
                             {
-                              color: theme.colors['Medium'],
+                              color: palettes.Brand['Secondary Text'],
                               fontFamily: 'Inter_300Light',
-                              fontSize: 14,
+                              fontSize: 12,
                               lineHeight: 24,
                             },
                             dimensions.width
                           )}
                         >
-                          {listData?.date}
-                          {' - '}
+                          {formatDate(listData?.date)}
+                          {', '}
                           {listData?.start_time}
-                        </Text>
-                      </View>
-                      {/* Riders View */}
-                      <View
-                        style={StyleSheet.applyWidth(
-                          {
-                            alignItems: 'center',
-                            flexDirection: 'row',
-                            marginBottom: 8,
-                          },
-                          dimensions.width
-                        )}
-                      >
-                        {/* Riders Icon */}
-                        <Icon
-                          color={theme.colors['Strong']}
-                          name={'MaterialCommunityIcons/bike'}
-                          size={20}
-                          style={StyleSheet.applyWidth(
-                            {
-                              backgroundColor: 'rgb(255, 255, 255)',
-                              marginRight: 8,
-                            },
-                            dimensions.width
-                          )}
-                        />
-                        {/* Riders Text */}
-                        <Text
-                          accessible={true}
-                          ellipsizeMode={'tail'}
-                          numberOfLines={2}
-                          style={StyleSheet.applyWidth(
-                            {
-                              color: theme.colors['Medium'],
-                              fontFamily: 'Inter_300Light',
-                              fontSize: 14,
-                              lineHeight: 24,
-                            },
-                            dimensions.width
-                          )}
-                        >
-                          {'6 Riders'}
                         </Text>
                       </View>
                       {/* Tags View */}
@@ -254,30 +429,26 @@ const EventCardListBlock = props => {
                           dimensions.width
                         )}
                       >
+                        {/* Tags Text */}
                         <Text
                           accessible={true}
                           style={StyleSheet.applyWidth(
                             {
-                              color: theme.colors.medium,
+                              color: palettes.Brand['Secondary Text'],
                               fontFamily: 'Inter_300Light',
-                              fontSize: 14,
+                              fontSize: 12,
                             },
                             dimensions.width
                           )}
                         >
-                          {listData?.tags?.[0]}
+                          {null}
                         </Text>
                       </View>
                     </View>
                     {/* Button View */}
                     <View
                       style={StyleSheet.applyWidth(
-                        {
-                          marginBottom: 32,
-                          paddingLeft: 32,
-                          paddingRight: 32,
-                          width: '100%',
-                        },
+                        { marginBottom: 12, marginTop: 12, width: '100%' },
                         dimensions.width
                       )}
                     >
@@ -297,14 +468,15 @@ const EventCardListBlock = props => {
                           StyleSheet.compose(
                             GlobalStyles.ButtonStyles(theme)['Button'].style,
                             {
-                              backgroundColor: 'rgb(48, 93, 35)',
+                              backgroundColor: '"rgb(48, 93, 35)"',
+                              borderRadius: 12,
                               fontFamily: 'Inter_300Light',
-                              fontSize: 14,
+                              fontSize: 16,
                             }
                           ),
                           dimensions.width
                         )}
-                        title={'Learn More'}
+                        title={'View Ride'}
                       />
                     </View>
                   </Touchable>

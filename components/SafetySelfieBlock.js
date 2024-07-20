@@ -1,4 +1,5 @@
 import React from 'react';
+import palettes from '../themes/palettes';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
 import openImagePickerUtil from '../utils/openImagePicker';
@@ -11,11 +12,21 @@ const SafetySelfieBlock = props => {
   const dimensions = useWindowDimensions();
 
   return (
-    <View style={StyleSheet.applyWidth({ marginTop: 20 }, dimensions.width)}>
+    <View
+      style={StyleSheet.applyWidth(
+        {
+          backgroundColor: '"rgb(253, 253, 245)"',
+          marginTop: 72,
+          paddingLeft: 36,
+          paddingRight: 36,
+        },
+        dimensions.width
+      )}
+    >
       <Text
         accessible={true}
         style={StyleSheet.applyWidth(
-          { color: theme.colors.strong, fontFamily: 'Inter_300Light' },
+          { color: theme.colors.text.strong, fontFamily: 'Inter_300Light' },
           dimensions.width
         )}
       >
@@ -47,9 +58,9 @@ const SafetySelfieBlock = props => {
           style={StyleSheet.applyWidth(
             {
               alignItems: 'center',
-              backgroundColor: theme.colors['Custom Color'],
+              backgroundColor: palettes.App['Custom Color'],
               borderBottomWidth: 1,
-              borderColor: theme.colors['Light'],
+              borderColor: theme.colors.text.light,
               borderLeftWidth: 1,
               borderRadius: 12,
               borderRightWidth: 1,
@@ -62,7 +73,7 @@ const SafetySelfieBlock = props => {
           )}
         >
           <Icon
-            color={theme.colors['Primary']}
+            color={theme.colors.branding.primary}
             name={'AntDesign/camerao'}
             size={35}
           />

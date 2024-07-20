@@ -28,8 +28,8 @@ SplashScreen.preventAutoHideAsync();
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
   }),
 });
 
@@ -42,8 +42,7 @@ const App = () => {
     Inter_300Light: Fonts.Inter_300Light,
     Inter_400Regular: Fonts.Inter_400Regular,
     Inter_500Medium: Fonts.Inter_500Medium,
-    Inter_200ExtraLight: Fonts.Inter_200ExtraLight,
-    Poppins_400Regular: Fonts.Poppins_400Regular,
+    Inter_700Bold: Fonts.Inter_700Bold,
   });
 
   React.useEffect(() => {
@@ -78,7 +77,11 @@ const App = () => {
     >
       <GlobalVariableProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider theme={Draftbit}>
+          <ThemeProvider
+            themes={[Draftbit]}
+            breakpoints={{}}
+            initialThemeName={Draftbit.name}
+          >
             <AppNavigator />
           </ThemeProvider>
         </QueryClientProvider>

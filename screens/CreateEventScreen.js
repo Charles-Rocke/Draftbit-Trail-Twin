@@ -2,22 +2,32 @@ import React from 'react';
 import * as GlobalStyles from '../GlobalStyles.js';
 import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
 import * as GlobalVariables from '../config/GlobalVariableContext';
-import eventCreated from '../global-functions/eventCreated';
+import * as base64decode from '../custom-files/base64decode';
+import * as supabase from '../custom-files/supabase';
+import checkEventLimit from '../global-functions/checkEventLimit';
+import palettes from '../themes/palettes';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
+import openCameraUtil from '../utils/openCamera';
+import openImagePickerUtil from '../utils/openImagePicker';
+import parseBoolean from '../utils/parseBoolean';
 import showAlertUtil from '../utils/showAlert';
 import useWindowDimensions from '../utils/useWindowDimensions';
 import {
   Button,
   DatePicker,
+  Divider,
+  Icon,
   MultiSelectPicker,
   ScreenContainer,
   SimpleStyleKeyboardAwareScrollView,
   SimpleStyleScrollView,
   TextInput,
+  Touchable,
   withTheme,
 } from '@draftbit/ui';
-import { Text, View } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
+import { Image, Text, View } from 'react-native';
 
 const CreateEventScreen = props => {
   const { theme, navigation } = props;
@@ -30,17 +40,23 @@ const CreateEventScreen = props => {
   const [dateInputV1, setDateInputV1] = React.useState(new Date());
   const [dateInputValue, setDateInputValue] = React.useState('');
   const [datePickerValue, setDatePickerValue] = React.useState(new Date());
+  const [descriptionInputV1, setDescriptionInputV1] = React.useState('');
   const [emailInput, setEmailInput] = React.useState('');
   const [eventNameInputV1, setEventNameInputV1] = React.useState('');
   const [eventNameInputValue, setEventNameInputValue] = React.useState('');
   const [eventTypeInput, setEventTypeInput] = React.useState('');
   const [eventTypeInputV1, setEventTypeInputV1] = React.useState('');
+  const [hostAgeInput, setHostAgeInput] = React.useState('');
+  const [hostAgeInputV1, setHostAgeInputV1] = React.useState(0);
   const [hostNameInput, setHostNameInput] = React.useState('');
   const [hostNameInputV1, setHostNameInputV1] = React.useState('');
+  const [imageName, setImageName] = React.useState('');
+  const [imageNameDbUrl, setImageNameDbUrl] = React.useState('');
   const [invitesInputArrayV1, setInvitesInputArrayV1] = React.useState([]);
   const [invitesInputIntV1, setInvitesInputIntV1] = React.useState(0);
   const [invitesInputV1, setInvitesInputV1] = React.useState([]);
   const [invitesInputValue, setInvitesInputValue] = React.useState([]);
+  const [isSafetySelfie, setIsSafetySelfie] = React.useState(false);
   const [multiSelectPicker2Value, setMultiSelectPicker2Value] = React.useState(
     []
   );
@@ -57,6 +73,10 @@ const CreateEventScreen = props => {
   const [partySizeInputV1, setPartySizeInputV1] = React.useState(0);
   const [pickerValue, setPickerValue] = React.useState('');
   const [pickerValue2, setPickerValue2] = React.useState('');
+  const [pickerValue3, setPickerValue3] = React.useState('');
+  const [rideNameInput, setRideNameInput] = React.useState('');
+  const [safetySelfie, setSafetySelfie] = React.useState('');
+  const [safteySelfiePath, setSafteySelfiePath] = React.useState('');
   const [startTimeInput, setStartTimeInput] = React.useState(new Date());
   const [startTimeInputV1, setStartTimeInputV1] = React.useState(new Date());
   const [startTimeInputValue, setStartTimeInputValue] = React.useState('');
@@ -68,17 +88,30 @@ const CreateEventScreen = props => {
   const [textAreaValue, setTextAreaValue] = React.useState('');
   const [textInputValue, setTextInputValue] = React.useState('');
   const [trailNameInput, setTrailNameInput] = React.useState('');
+  const [trailNameInputV1, setTrailNameInputV1] = React.useState('');
   const convertDateToCustomFormat = isoString => {
-    // Type the code for the body of your function or hook here.
-    // Functions can be triggered via Button/Touchable actions.
-    // Hooks are run per ReactJS rules.
+    // console.log("Date String:", isoString);
+    // const date = new Date(isoString);
+    // const year = date.getFullYear();
+    // const month = String(date.getMonth() + 1).padStart(2, '0');
+    // const day = String(date.getDate()).padStart(2, '0');
+    // console.log(`${year}-${month}-${day}`);
+    // return `${year}-${month}-${day}`;
 
-    /* String line breaks are accomplished with backticks ( example: `line one
-line two` ) and will not work with special characters inside of quotes ( example: "line one line two" ) */
+    console.log('Date String:', isoString);
+
     const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+
+    // Get the timezone offset in minutes and convert it to milliseconds
+    const timezoneOffset = date.getTimezoneOffset() * 60000;
+
+    // Adjust the date to the local timezone
+    const localDate = new Date(date.getTime() - timezoneOffset);
+
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+
     console.log(`${year}-${month}-${day}`);
     return `${year}-${month}-${day}`;
   };
@@ -97,15 +130,150 @@ line two` ) and will not work with special characters inside of quotes ( example
     const seconds = '00';
     return `${hours}:${minutes}:${seconds}`;
   };
+
+  const checkBase64Data = base64Data => {
+    // Ensure base64 data is provided
+    if (!base64Data) {
+      console.error('No base64 data provided');
+      return { error: 'No base64 data provided' };
+    }
+    return { success: true };
+  };
+
+  const extractBase64Components = base64Data => {
+    // Extract the base64 string and mime type
+    const [prefix, base64String] = base64Data.split(',');
+    const mimeType = prefix.match(/:(.*?);/)[1];
+    console.log('MIME TYPE: ', mimeType);
+    return { base64String, mimeType };
+  };
+
+  const generateImageName = () => {
+    // Generate a unique image name
+    const imgName = `${Math.random()
+      .toString(36)
+      .substring(2)}-${Date.now()}.jpg`;
+    return imgName;
+  };
+
+  const decodeBase64ToArrayBuffer = base64String => {
+    console.log(
+      'TYPE OF base64decode.decode(base64String): ',
+      typeof base64decode.decode(base64String)
+    );
+    return base64decode.decode(base64String);
+  };
+
+  const checkArrayBuffer = arrayBuffer => {
+    // Ensure the arrayBuffer has data
+    if (arrayBuffer.byteLength === 0) {
+      console.error(
+        'The arrayBuffer size is 0 bytes. The conversion may have failed.'
+      );
+      return 'File conversion failed, arrayBuffer size is 0 bytes.';
+    }
+    return { success: true };
+  };
+
+  const uploadToSupabase = async (imageName, arrayBuffer, mimeType) => {
+    // Upload the arrayBuffer to Supabase
+    const { data: uploadData, error: uploadError } =
+      await supabase.default.storage
+        .from('safety_selfies')
+        .upload(imageName, arrayBuffer, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: mimeType,
+        });
+
+    if (uploadError) {
+      console.error('Upload failed:', uploadError);
+      return `Upload failed: ${uploadError.message}`;
+    }
+    console.log('Upload successful!', uploadData.path);
+    return { uploadData };
+  };
+
+  const convertUserImagePathToLink = (imagePath, supabaseUrl) => {
+    const userImageDbLink = `${supabaseUrl}/storage/v1/object/public/safety_selfies/${imagePath}`;
+    return userImageDbLink;
+  };
+
+  const convertImageNameToDbPath = imageName => {
+    const fullImagePath = convertUserImagePathToLink(
+      imageName,
+      supabase.default.supabaseUrl
+    );
+
+    // Return the full image path
+    return fullImagePath;
+  };
+
+  const uploadSelfieToBucket = async (base64Data, genImageName) => {
+    try {
+      // Check base64 data
+      const base64Check = checkBase64Data(base64Data);
+      if (base64Check.error) return base64Check.error;
+
+      // Extract base64 components
+      const { base64String, mimeType } = extractBase64Components(base64Data);
+
+      // Generate image name and path
+      const generatedImageName = genImageName; // generateImageName(); // Set to global variable
+      // const imagePath = `safety_selfies/${imageName}`;
+      console.log('IMAGE NAME: ', generatedImageName);
+      // Decode base64 string to ArrayBuffer
+      const arrayBuffer = decodeBase64ToArrayBuffer(base64String);
+
+      // Check ArrayBuffer
+      const arrayBufferCheck = checkArrayBuffer(arrayBuffer);
+      if (arrayBufferCheck.error) return arrayBufferCheck.error;
+
+      // Upload to Supabase
+      const uploadResult = await uploadToSupabase(
+        generatedImageName,
+        arrayBuffer,
+        mimeType
+      );
+      if (uploadResult.error) return uploadResult.error;
+
+      // const fullImagePath = `${supabase.supabaseUrl}/storage/v1/object/public/${uploadResult.uploadData.path}`;
+      // Variables.safteySelfiePath = fullImagePath;
+      // return { imagePath: fullImagePath };
+      // const fullImagePath = convertUserImagePathToLink(uploadResult.uploadData.path, supabase.default.supabaseUrl);
+      // console.log("FULL IMAGE PATH FOR DB/upload.data.path: ", fullImagePath, uploadResult.uploadData.path);
+
+      // // Return the full image path
+      // return { imagePath: fullImagePath };
+      return 'Upload to bucket success';
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return `Error uploading file: ${error.message}`;
+    }
+  };
   const supabaseEventsCreateEventPOST = SupabaseEventsApi.useCreateEventPOST();
+  const isFocused = useIsFocused();
+  React.useEffect(() => {
+    try {
+      if (!isFocused) {
+        return;
+      }
+      setSafetySelfie(null);
+      setIsSafetySelfie(parseBoolean(false));
+      console.log(isSafetySelfie);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [isFocused]);
 
   return (
     <ScreenContainer
-      scrollable={false}
-      hasSafeArea={true}
+      hasBottomSafeArea={false}
+      hasSafeArea={false}
       hasTopSafeArea={true}
+      scrollable={true}
       style={StyleSheet.applyWidth(
-        { backgroundColor: theme.colors['Background'] },
+        { backgroundColor: '"rgb(253, 253, 245)"' },
         dimensions.width
       )}
     >
@@ -113,9 +281,9 @@ line two` ) and will not work with special characters inside of quotes ( example
         enableAutomaticScroll={false}
         enableOnAndroid={false}
         enableResetScrollToCoords={false}
-        keyboardShouldPersistTaps={'never'}
         showsVerticalScrollIndicator={true}
         viewIsInsideTabBar={false}
+        keyboardShouldPersistTaps={'never'}
       >
         <SimpleStyleScrollView
           bounces={true}
@@ -128,10 +296,10 @@ line two` ) and will not work with special characters inside of quotes ( example
           <View
             style={StyleSheet.applyWidth(
               {
-                gap: 32,
+                gap: 24,
                 justifyContent: 'space-between',
-                marginBottom: 72,
-                marginTop: 72,
+                marginBottom: 64,
+                marginTop: 64,
                 paddingLeft: 32,
                 paddingRight: 32,
               },
@@ -143,57 +311,70 @@ line two` ) and will not work with special characters inside of quotes ( example
               accessible={true}
               style={StyleSheet.applyWidth(
                 {
-                  color: theme.colors.strong,
-                  fontFamily: 'Inter_300Light',
-                  fontSize: 24,
+                  color: theme.colors.text.strong,
+                  fontFamily: 'Inter_400Regular',
+                  fontSize: 18,
                   opacity: 0.8,
                 },
                 dimensions.width
               )}
             >
-              {'Create a Ride\n'}
+              {'Create a Ride'}
             </Text>
-            {/* Trail Name */}
+            <Divider
+              color={theme.colors.border.brand}
+              {...GlobalStyles.DividerStyles(theme)['Divider'].props}
+              style={StyleSheet.applyWidth(
+                StyleSheet.compose(
+                  GlobalStyles.DividerStyles(theme)['Divider'].style,
+                  { marginBottom: 12, marginTop: 12 }
+                ),
+                dimensions.width
+              )}
+            />
+            {/* Host Name */}
             <View>
               {/* Label */}
               <Text
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Strong'],
+                    color: theme.colors.text.strong,
                     fontFamily: 'Inter_300Light',
+                    fontSize: 14,
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Trail Name'}
+                {'Your Name'}
               </Text>
-              {/* eventNameInput */}
+              {/* hostNameInput */}
               <TextInput
                 autoCapitalize={'none'}
                 autoCorrect={true}
                 changeTextDelay={500}
-                onChangeText={newEventNameInputValue => {
+                onChangeText={newHostNameInputValue => {
                   try {
-                    setEventNameInputV1(newEventNameInputValue);
+                    setHostNameInputV1(newHostNameInputValue);
                   } catch (err) {
                     console.error(err);
                   }
                 }}
                 webShowOutline={true}
-                placeholder={'Name of Trail'}
-                placeholderTextColor={theme.colors['Light']}
+                maxLength={25}
+                placeholder={'Enter your name'}
+                placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: theme.colors['Custom Color'],
+                    backgroundColor: palettes.App['Custom Color'],
                     borderBottomWidth: 1,
-                    borderColor: theme.colors['Light'],
+                    borderColor: theme.colors.text.light,
                     borderLeftWidth: 1,
                     borderRadius: 12,
                     borderRightWidth: 1,
                     borderTopWidth: 1,
-                    color: theme.colors['Medium'],
+                    color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
                     height: 48,
                     marginTop: 8,
@@ -204,24 +385,190 @@ line two` ) and will not work with special characters inside of quotes ( example
                   },
                   dimensions.width
                 )}
-                value={eventNameInputV1}
+                value={hostNameInputV1}
               />
             </View>
-            {/* Trail Address */}
+            {/* Host Age */}
             <View>
-              {/* title */}
+              {/* Label */}
               <Text
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Strong'],
+                    color: theme.colors.text.strong,
+                    fontFamily: 'Inter_300Light',
+                    fontSize: 14,
+                    opacity: 0.85,
+                  },
+                  dimensions.width
+                )}
+              >
+                {'Your Age'}
+              </Text>
+              {/* hostAgeInput */}
+              <TextInput
+                autoCapitalize={'none'}
+                autoCorrect={true}
+                changeTextDelay={500}
+                onChangeText={newHostAgeInputValue => {
+                  try {
+                    setHostAgeInputV1(newHostAgeInputValue);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                webShowOutline={true}
+                maxLength={2}
+                placeholder={'Enter your age'}
+                placeholderTextColor={theme.colors.text.light}
+                style={StyleSheet.applyWidth(
+                  {
+                    backgroundColor: palettes.App['Custom Color'],
+                    borderBottomWidth: 1,
+                    borderColor: theme.colors.text.light,
+                    borderLeftWidth: 1,
+                    borderRadius: 12,
+                    borderRightWidth: 1,
+                    borderTopWidth: 1,
+                    color: palettes.Brand['Secondary Text'],
+                    fontFamily: 'Inter_300Light',
+                    height: 48,
+                    marginTop: 8,
+                    paddingBottom: 8,
+                    paddingLeft: 20,
+                    paddingRight: 8,
+                    paddingTop: 8,
+                  },
+                  dimensions.width
+                )}
+                value={hostAgeInputV1}
+              />
+            </View>
+            {/* Ride Name */}
+            <View>
+              {/* Label */}
+              <Text
+                accessible={true}
+                style={StyleSheet.applyWidth(
+                  {
+                    color: theme.colors.text.strong,
                     fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Trail address'}
+                {'Ride Name'}
+              </Text>
+              {/* rideNameInput */}
+              <TextInput
+                autoCapitalize={'none'}
+                autoCorrect={true}
+                changeTextDelay={500}
+                onChangeText={newRideNameInputValue => {
+                  try {
+                    setRideNameInput(newRideNameInputValue);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                webShowOutline={true}
+                maxLength={25}
+                placeholder={'Enter a name for the ride'}
+                placeholderTextColor={theme.colors.text.light}
+                style={StyleSheet.applyWidth(
+                  {
+                    backgroundColor: palettes.App['Custom Color'],
+                    borderBottomWidth: 1,
+                    borderColor: theme.colors.text.light,
+                    borderLeftWidth: 1,
+                    borderRadius: 12,
+                    borderRightWidth: 1,
+                    borderTopWidth: 1,
+                    color: palettes.Brand['Secondary Text'],
+                    fontFamily: 'Inter_300Light',
+                    height: 48,
+                    marginTop: 8,
+                    paddingBottom: 8,
+                    paddingLeft: 20,
+                    paddingRight: 8,
+                    paddingTop: 8,
+                  },
+                  dimensions.width
+                )}
+                value={rideNameInput}
+              />
+            </View>
+            {/* Trail Names */}
+            <View>
+              {/* Label */}
+              <Text
+                accessible={true}
+                style={StyleSheet.applyWidth(
+                  {
+                    color: theme.colors.text.strong,
+                    fontFamily: 'Inter_300Light',
+                    opacity: 0.85,
+                  },
+                  dimensions.width
+                )}
+              >
+                {'Trail Names'}
+              </Text>
+              {/* trailNameInput */}
+              <TextInput
+                autoCapitalize={'none'}
+                autoCorrect={true}
+                changeTextDelay={500}
+                onChangeText={newTrailNameInputValue => {
+                  try {
+                    setTrailNameInputV1(newTrailNameInputValue);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                webShowOutline={true}
+                maxLength={50}
+                placeholder={'Enter the name of the trails you plan to ride'}
+                placeholderTextColor={theme.colors.text.light}
+                style={StyleSheet.applyWidth(
+                  {
+                    backgroundColor: palettes.App['Custom Color'],
+                    borderBottomWidth: 1,
+                    borderColor: theme.colors.text.light,
+                    borderLeftWidth: 1,
+                    borderRadius: 12,
+                    borderRightWidth: 1,
+                    borderTopWidth: 1,
+                    color: palettes.Brand['Secondary Text'],
+                    fontFamily: 'Inter_300Light',
+                    height: 48,
+                    marginTop: 8,
+                    paddingBottom: 8,
+                    paddingLeft: 20,
+                    paddingRight: 8,
+                    paddingTop: 8,
+                  },
+                  dimensions.width
+                )}
+                value={trailNameInputV1}
+              />
+            </View>
+            {/* Trail Address */}
+            <View>
+              {/* Label */}
+              <Text
+                accessible={true}
+                style={StyleSheet.applyWidth(
+                  {
+                    color: theme.colors.text.strong,
+                    fontFamily: 'Inter_300Light',
+                    opacity: 0.85,
+                  },
+                  dimensions.width
+                )}
+              >
+                {'Address'}
               </Text>
               {/* addressInput */}
               <TextInput
@@ -238,20 +585,21 @@ line two` ) and will not work with special characters inside of quotes ( example
                 }}
                 textAlignVertical={'top'}
                 webShowOutline={true}
-                placeholder={'Enter full Trail address'}
-                placeholderTextColor={theme.colors['Light']}
+                maxLength={75}
+                placeholder={'Enter address to parking'}
+                placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: theme.colors['Custom Color'],
+                    backgroundColor: palettes.App['Custom Color'],
                     borderBottomWidth: 1,
-                    borderColor: theme.colors['Light'],
+                    borderColor: theme.colors.text.light,
                     borderLeftWidth: 1,
                     borderRadius: 12,
                     borderRightWidth: 1,
                     borderTopWidth: 1,
-                    color: theme.colors['Medium'],
+                    color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
-                    height: 100,
+                    height: 48,
                     marginTop: 8,
                     paddingBottom: 8,
                     paddingLeft: 20,
@@ -263,6 +611,63 @@ line two` ) and will not work with special characters inside of quotes ( example
                 value={addressInputV1}
               />
             </View>
+            {/* Ride Description */}
+            <View>
+              {/* title */}
+              <Text
+                accessible={true}
+                style={StyleSheet.applyWidth(
+                  {
+                    color: theme.colors.text.strong,
+                    fontFamily: 'Inter_300Light',
+                    opacity: 0.85,
+                  },
+                  dimensions.width
+                )}
+              >
+                {'Ride Description\n'}
+              </Text>
+              {/* descriptionInput */}
+              <TextInput
+                autoCorrect={true}
+                changeTextDelay={500}
+                multiline={true}
+                numberOfLines={4}
+                onChangeText={newDescriptionInputValue => {
+                  try {
+                    setDescriptionInputV1(newDescriptionInputValue);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                textAlignVertical={'top'}
+                webShowOutline={true}
+                maxLength={300}
+                placeholder={'Describe the plan of the ride'}
+                placeholderTextColor={theme.colors.text.light}
+                style={StyleSheet.applyWidth(
+                  {
+                    backgroundColor: palettes.App['Custom Color'],
+                    borderBottomWidth: 1,
+                    borderColor: theme.colors.text.light,
+                    borderLeftWidth: 1,
+                    borderRadius: 12,
+                    borderRightWidth: 1,
+                    borderTopWidth: 1,
+                    color: palettes.Brand['Secondary Text'],
+                    fontFamily: 'Inter_300Light',
+                    height: 96,
+                    marginTop: 8,
+                    paddingBottom: 8,
+                    paddingLeft: 20,
+                    paddingRight: 20,
+                    paddingTop: 12,
+                  },
+                  dimensions.width
+                )}
+                value={descriptionInputV1}
+              />
+            </View>
             {/* Date */}
             <View>
               {/* Label */}
@@ -270,7 +675,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Strong'],
+                    color: theme.colors.text.strong,
                     fontFamily: 'Inter_300Light',
                     fontSize: 14,
                     opacity: 0.85,
@@ -280,50 +685,45 @@ line two` ) and will not work with special characters inside of quotes ( example
               >
                 {'Date'}
               </Text>
-              {/* dateInput */}
-              <DatePicker
-                autoDismissKeyboard={true}
-                disabled={false}
-                hideLabel={false}
-                leftIconMode={'inset'}
-                mode={'date'}
-                onDateChange={newDateInputValue => {
-                  console.log('dateInput ON_DATE_CHANGE Start');
-                  let error = null;
+              {/* dateInput 2 */}
+              <TextInput
+                autoCorrect={true}
+                changeTextDelay={500}
+                multiline={true}
+                onChangeText={newDateInput2Value => {
                   try {
-                    console.log('Start ON_DATE_CHANGE:0 SET_VARIABLE');
-                    const valueQQqj8kUx =
-                      convertDateToCustomFormat(newDateInputValue);
-                    setDateInputV1(valueQQqj8kUx);
-                    const formattedDateInputV1 = valueQQqj8kUx;
-                    console.log('Complete ON_DATE_CHANGE:0 SET_VARIABLE');
+                    setDateInputV1(newDateInput2Value);
                   } catch (err) {
                     console.error(err);
-                    error = err.message ?? err;
                   }
-                  console.log(
-                    'dateInput ON_DATE_CHANGE Complete',
-                    error ? { error } : 'no error'
-                  );
                 }}
-                date={dateInputV1}
-                format={'yyyy-mm-dd'}
-                label={'Select desired date'}
-                rightIconName={'AntDesign/calendar'}
+                textAlignVertical={'top'}
+                webShowOutline={true}
+                maxLength={8}
+                numberOfLines={1}
+                placeholder={'mm/dd/yy'}
+                placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: theme.colors['Custom Color'],
-                    borderColor: theme.colors['Light'],
+                    backgroundColor: palettes.App['Custom Color'],
+                    borderBottomWidth: 1,
+                    borderColor: theme.colors.text.light,
+                    borderLeftWidth: 1,
                     borderRadius: 12,
-                    color: theme.colors['Medium'],
+                    borderRightWidth: 1,
+                    borderTopWidth: 1,
+                    color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
+                    height: 48,
                     marginTop: 8,
-                    paddingLeft: 5,
-                    paddingRight: 5,
+                    paddingBottom: 8,
+                    paddingLeft: 20,
+                    paddingRight: 20,
+                    paddingTop: 12,
                   },
                   dimensions.width
                 )}
-                type={'solid'}
+                value={dateInputV1}
               />
             </View>
             {/* Start Time */}
@@ -333,7 +733,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                 accessible={true}
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors['Strong'],
+                    color: theme.colors.text.strong,
                     fontFamily: 'Inter_300Light',
                     opacity: 0.85,
                   },
@@ -342,139 +742,45 @@ line two` ) and will not work with special characters inside of quotes ( example
               >
                 {'Start time'}
               </Text>
-              {/* startTimeInput */}
-              <DatePicker
-                autoDismissKeyboard={true}
-                disabled={false}
-                hideLabel={false}
-                leftIconMode={'inset'}
-                onDateChange={newStartTimeInputValue => {
+              {/* startTimeInput 2 */}
+              <TextInput
+                autoCorrect={true}
+                changeTextDelay={500}
+                multiline={true}
+                onChangeText={newStartTimeInput2Value => {
                   try {
-                    setStartTimeInputV1(newStartTimeInputValue);
+                    setStartTimeInputV1(newStartTimeInput2Value);
                   } catch (err) {
                     console.error(err);
                   }
                 }}
-                date={startTimeInputV1}
-                format={'HH:MM:00'}
-                label={'Select desired start time'}
-                mode={'time'}
-                rightIconName={'AntDesign/clockcircleo'}
+                textAlignVertical={'top'}
+                webShowOutline={true}
+                maxLength={7}
+                numberOfLines={1}
+                placeholder={'HH:MMam/pm'}
+                placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: theme.colors['Custom Color'],
-                    borderColor: theme.colors['Light'],
+                    backgroundColor: palettes.App['Custom Color'],
+                    borderBottomWidth: 1,
+                    borderColor: theme.colors.text.light,
+                    borderLeftWidth: 1,
                     borderRadius: 12,
-                    color: theme.colors['Medium'],
+                    borderRightWidth: 1,
+                    borderTopWidth: 1,
+                    color: palettes.Brand['Secondary Text'],
+                    fontFamily: 'Inter_300Light',
+                    height: 48,
                     marginTop: 8,
-                    paddingLeft: 5,
-                    paddingRight: 5,
+                    paddingBottom: 8,
+                    paddingLeft: 20,
+                    paddingRight: 20,
+                    paddingTop: 12,
                   },
                   dimensions.width
                 )}
-                type={'solid'}
-              />
-            </View>
-            {/* Party Size */}
-            <View>
-              {/* Label */}
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors['Medium'],
-                    fontFamily: 'Inter_300Light',
-                    opacity: 0.85,
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Max Party Size'}
-              </Text>
-              {/* partySizeInput */}
-              <TextInput
-                autoCapitalize={'none'}
-                autoCorrect={true}
-                changeTextDelay={500}
-                onChangeText={newPartySizeInputValue => {
-                  try {
-                    setPartySizeInputV1(newPartySizeInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                webShowOutline={true}
-                {...GlobalStyles.TextInputStyles(theme)['Text Input'].props}
-                placeholder={'Enter your desired party size'}
-                placeholderTextColor={theme.colors['Light']}
-                style={StyleSheet.applyWidth(
-                  StyleSheet.compose(
-                    GlobalStyles.TextInputStyles(theme)['Text Input'].style,
-                    {
-                      backgroundColor: theme.colors['Custom Color'],
-                      borderColor: theme.colors['Light'],
-                      borderRadius: 12,
-                      color: theme.colors['Medium'],
-                      fontFamily: 'Inter_300Light',
-                      height: 48,
-                      marginTop: 8,
-                      paddingLeft: 20,
-                    }
-                  ),
-                  dimensions.width
-                )}
-                value={partySizeInputV1}
-              />
-            </View>
-            {/* Invite Friend */}
-            <View>
-              {/* Label */}
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors['Strong'],
-                    fontFamily: 'Inter_300Light',
-                    opacity: 0.85,
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Invite a Friend'}
-              </Text>
-              {/* invitesInput */}
-              <TextInput
-                autoCapitalize={'none'}
-                autoCorrect={true}
-                changeTextDelay={500}
-                onChangeText={newInvitesInputValue => {
-                  try {
-                    setInvitesInputIntV1(newInvitesInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                webShowOutline={true}
-                {...GlobalStyles.TextInputStyles(theme)['Text Input'].props}
-                placeholder={'Enter 1 friends phone number'}
-                placeholderTextColor={theme.colors['Light']}
-                style={StyleSheet.applyWidth(
-                  StyleSheet.compose(
-                    GlobalStyles.TextInputStyles(theme)['Text Input'].style,
-                    {
-                      backgroundColor: theme.colors['Custom Color'],
-                      borderColor: theme.colors['Light'],
-                      borderRadius: 12,
-                      color: theme.colors['Medium'],
-                      fontFamily: 'Inter_300Light',
-                      height: 48,
-                      marginTop: 8,
-                      paddingLeft: 20,
-                    }
-                  ),
-                  dimensions.width
-                )}
-                value={invitesInputIntV1}
+                value={startTimeInputV1}
               />
             </View>
             {/* Tags View */}
@@ -484,6 +790,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                   alignItems: 'stretch',
                   flex: 1,
                   justifyContent: 'space-evenly',
+                  zIndex: 2,
                 },
                 dimensions.width
               )}
@@ -491,7 +798,7 @@ line two` ) and will not work with special characters inside of quotes ( example
               {/* Event Tags */}
               <View
                 style={StyleSheet.applyWidth(
-                  { flex: 1, marginBottom: 24, position: 'relative' },
+                  { position: 'relative' },
                   dimensions.width
                 )}
               >
@@ -500,7 +807,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                   accessible={true}
                   style={StyleSheet.applyWidth(
                     {
-                      color: theme.colors['Strong'],
+                      color: theme.colors.text.strong,
                       fontFamily: 'Inter_300Light',
                       opacity: 0.85,
                     },
@@ -511,11 +818,11 @@ line two` ) and will not work with special characters inside of quotes ( example
                 </Text>
                 <MultiSelectPicker
                   autoDismissKeyboard={true}
-                  dropDownBackgroundColor={theme.colors.background}
-                  dropDownBorderColor={theme.colors.divider}
+                  dropDownBackgroundColor={theme.colors.background.brand}
+                  dropDownBorderColor={theme.colors.border.brand}
                   dropDownBorderRadius={8}
                   dropDownBorderWidth={1}
-                  dropDownTextColor={theme.colors.strong}
+                  dropDownTextColor={theme.colors.text.strong}
                   iconSize={24}
                   leftIconMode={'inset'}
                   onValueChange={newMultiSelectPickerValue => {
@@ -527,26 +834,27 @@ line two` ) and will not work with special characters inside of quotes ( example
                     }
                   }}
                   placeholder={'Select an option'}
-                  selectedIconColor={theme.colors.strong}
+                  selectedIconColor={theme.colors.text.strong}
                   selectedIconName={'Feather/check'}
                   selectedIconSize={20}
                   type={'solid'}
                   options={[
-                    { label: '🟤 dig party', value: 'dig party' },
-                    { label: '🔵 group ride', value: 'group ride' },
-                    { label: '🟣 race', value: 'race' },
-                    { label: '⚫ jump session', value: 'jump session' },
-                    { label: '🟠 enduro', value: 'enduro' },
-                    {
-                      label: '🟢 Beginner Friendly',
-                      value: 'Beginner Friendly',
-                    },
-                    { label: '🟡 Technical', value: 'Technical' },
+                    { label: 'Dig party', value: 'Dig party' },
+                    { label: 'Group ride', value: 'Group ride' },
+                    { label: 'Race', value: 'Race' },
+                    { label: 'Jump session', value: 'Jump session' },
+                    { label: 'Dirt Jumping', value: 'Dirt Jumping' },
+                    { label: 'Enduro', value: 'Enduro' },
+                    { label: 'Freeride', value: 'Freeride' },
+                    { label: 'Beginner ', value: 'Beginner' },
+                    { label: 'Intermediate', value: 'Intermediate' },
+                    { label: 'Advanced', value: 'Advanced' },
                   ]}
+                  rightIconName={'AntDesign/down'}
                   style={StyleSheet.applyWidth(
                     {
-                      backgroundColor: theme.colors['Surface'],
-                      color: theme.colors['Medium'],
+                      backgroundColor: palettes.Brand.Surface,
+                      color: palettes.Brand['Secondary Text'],
                       fontFamily: 'Inter_300Light',
                       position: 'relative',
                     },
@@ -556,75 +864,194 @@ line two` ) and will not work with special characters inside of quotes ( example
                 />
               </View>
             </View>
-            {/* Confirm Button View */}
+            {/* Personal Photo */}
             <View>
+              <Text
+                accessible={true}
+                style={StyleSheet.applyWidth(
+                  {
+                    color: theme.colors.text.strong,
+                    fontFamily: 'Inter_300Light',
+                  },
+                  dimensions.width
+                )}
+              >
+                {'Profile Photo'}
+              </Text>
+
+              <Touchable
+                onPress={() => {
+                  const handler = async () => {
+                    try {
+                      const safetySelfie = await openImagePickerUtil({
+                        mediaTypes: 'Images',
+                        allowsEditing: false,
+                        quality: 0.5,
+                        allowsMultipleSelection: false,
+                        permissionErrorMessage:
+                          'Sorry, we need media library permissions to make this work.',
+                        showAlertOnPermissionError: true,
+                      });
+
+                      if (safetySelfie) {
+                        console.log('Image was captured'.toString());
+                        setIsSafetySelfie(true);
+                        console.log('isSafetySelfie is set to True');
+                        setSafetySelfie(safetySelfie);
+                      } else {
+                        console.log('Upload Cancelled');
+                      }
+
+                      console.log('End of upload action workflow');
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  };
+                  handler();
+                }}
+                style={StyleSheet.applyWidth(
+                  { marginTop: 10 },
+                  dimensions.width
+                )}
+              >
+                {/* Uploaded Selfie */}
+                <View
+                  style={StyleSheet.applyWidth(
+                    {
+                      alignContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: palettes.App['Custom Color'],
+                      borderBottomWidth: 1,
+                      borderColor: theme.colors.text.light,
+                      borderLeftWidth: 1,
+                      borderRadius: 12,
+                      borderRightWidth: 1,
+                      borderStyle: 'dashed',
+                      borderTopWidth: 1,
+                      height: 140,
+                      justifyContent: 'center',
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {/* hostProfilePhoto */}
+                  <>
+                    {!safetySelfie ? null : (
+                      <Image
+                        resizeMode={'cover'}
+                        {...GlobalStyles.ImageStyles(theme)['Image'].props}
+                        source={{ uri: `${safetySelfie}` }}
+                        style={StyleSheet.applyWidth(
+                          GlobalStyles.ImageStyles(theme)['Image'].style,
+                          dimensions.width
+                        )}
+                      />
+                    )}
+                  </>
+                  <>
+                    {isSafetySelfie ? null : (
+                      <Text
+                        accessible={true}
+                        {...GlobalStyles.TextStyles(theme)['Text'].props}
+                        style={StyleSheet.applyWidth(
+                          StyleSheet.compose(
+                            GlobalStyles.TextStyles(theme)['Text'].style,
+                            {
+                              color: palettes.Brand['Secondary Text'],
+                              fontFamily: 'Inter_300Light',
+                              marginBottom: 8,
+                              textAlign: 'center',
+                            }
+                          ),
+                          dimensions.width
+                        )}
+                      >
+                        {'Upload a profile photo'}
+                      </Text>
+                    )}
+                  </>
+                  <>
+                    {isSafetySelfie ? null : (
+                      <Icon
+                        color={palettes.App['Custom Color_38']}
+                        name={'AntDesign/camerao'}
+                        size={35}
+                      />
+                    )}
+                  </>
+                </View>
+              </Touchable>
+            </View>
+            {/* Confirm Button View */}
+            <View
+              style={StyleSheet.applyWidth(
+                { marginTop: 24, zIndex: 1 },
+                dimensions.width
+              )}
+            >
               {/* Create Event Button */}
               <Button
                 iconPosition={'left'}
                 onPress={() => {
                   const handler = async () => {
-                    console.log('Create Event Button ON_PRESS Start');
-                    let error = null;
                     try {
-                      console.log('Start ON_PRESS:0 FETCH_REQUEST');
-                      (
-                        await supabaseEventsCreateEventPOST.mutateAsync({
-                          addressInputV1: addressInputV1,
-                          dateInputV1: convertDateToCustomFormat(dateInputV1),
-                          eventNameInputV1: eventNameInputV1,
-                          eventTypeInputV1: eventTypeInputV1,
-                          hostNameInputV1: hostNameInputV1,
-                          invitesInputV1: invitesInputIntV1,
-                          partySizeInputV1: partySizeInputV1,
-                          startTimeInputV1:
-                            convertTimeToCustomFormat(startTimeInputV1),
-                          tagsInputV1: tagsInputV1,
-                        })
-                      )?.json;
-                      console.log('Complete ON_PRESS:0 FETCH_REQUEST');
-                      console.log('Start ON_PRESS:1 CONSOLE_LOG');
-                      console.log(
-                        hostNameInputV1,
-                        invitesInputArrayV1,
-                        convertDateToCustomFormat(dateInputV1),
-                        tagsInputV1,
-                        convertTimeToCustomFormat(startTimeInputV1)
-                      );
-                      console.log('Complete ON_PRESS:1 CONSOLE_LOG');
-                      console.log('Start ON_PRESS:2 NAVIGATE');
-                      navigation.navigate('BottomTabNavigator', {
-                        screen: 'ExploreEventsScreen',
-                      });
-                      console.log('Complete ON_PRESS:2 NAVIGATE');
-                      console.log('Start ON_PRESS:3 CUSTOM_FUNCTION');
-                      await eventCreated('new_event_created');
-                      console.log('Complete ON_PRESS:3 CUSTOM_FUNCTION');
-                      console.log('Start ON_PRESS:4 CONSOLE_LOG');
-                      console.log(eventCreated('"new_event"created'));
-                      console.log('Complete ON_PRESS:4 CONSOLE_LOG');
-                      console.log('Start ON_PRESS:5 SHOW_ALERT');
-                      showAlertUtil({
-                        title: 'Success',
-                        message: 'You successfully created an event!',
-                        buttonText: 'Ok',
-                      });
-                      console.log('Complete ON_PRESS:5 SHOW_ALERT');
+                      const maxedDailyEvents = await (async () => {
+                        if (hostNameInputV1) {
+                          return await checkEventLimit();
+                        }
+                      })();
+                      if (maxedDailyEvents) {
+                        showAlertUtil({
+                          title: 'Failed',
+                          message: 'Maximun Rides Created Today',
+                          buttonText: 'Ok',
+                        });
+                      } else {
+                        const generatedimageName = generateImageName();
+                        const convertedImageDbUrl =
+                          convertImageNameToDbPath(generatedimageName);
+                        const res = (
+                          await supabaseEventsCreateEventPOST.mutateAsync({
+                            addressInputV1: addressInputV1,
+                            dateInputV1: dateInputV1,
+                            descriptionInputV1: descriptionInputV1,
+                            hostAgeInputV1: hostAgeInputV1,
+                            hostNameInputV1: hostNameInputV1,
+                            imageDbUrl: convertedImageDbUrl,
+                            invitesInputV1: invitesInputIntV1,
+                            partySizeInputV1: partySizeInputV1,
+                            rideNameInput: rideNameInput,
+                            startTimeInputV1: startTimeInputV1,
+                            tagsInputV1: multiSelectPickerValue2,
+                            trailNameInputV1: trailNameInputV1,
+                          })
+                        )?.json;
+                        console.log(res);
+                        await uploadSelfieToBucket(
+                          safetySelfie,
+                          generatedimageName
+                        );
+                        navigation.navigate('BottomTabNavigator', {
+                          screen: 'ExploreEventsScreen',
+                        });
+
+                        showAlertUtil({
+                          title: 'Success',
+                          message: 'You successfully created a ride!',
+                          buttonText: 'Ok',
+                        });
+                      }
                     } catch (err) {
                       console.error(err);
-                      error = err.message ?? err;
                     }
-                    console.log(
-                      'Create Event Button ON_PRESS Complete',
-                      error ? { error } : 'no error'
-                    );
                   };
                   handler();
                 }}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: theme.colors['Custom Color_38'],
+                    backgroundColor: palettes.App['Custom Color_38'],
                     borderRadius: 12,
-                    color: theme.colors['Custom Color'],
+                    color: palettes.App['Custom Color'],
                     fontFamily: 'Inter_500Medium',
                     fontSize: 16,
                     height: 52,

@@ -1,5 +1,7 @@
 import React from 'react';
 import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
+import * as GlobalVariables from '../config/GlobalVariableContext';
+import palettes from '../themes/palettes';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
 import useWindowDimensions from '../utils/useWindowDimensions';
@@ -11,10 +13,27 @@ import { Fetch } from 'react-request';
 const RiderProfileDisplayBlock = props => {
   const { theme } = props;
   const dimensions = useWindowDimensions();
+  const Constants = GlobalVariables.useValues();
+  const Variables = Constants;
+  React.useEffect(() => {
+    const handler = async () => {
+      try {
+        (
+          await SupabaseEventsApi.getAttendeesByEventIdGET(Constants, {
+            eventId: props.event_id ?? 121,
+            select: '*',
+          })
+        )?.json;
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    handler();
+  }, []);
 
   return (
     <SupabaseEventsApi.FetchGetAttendeesByEventIdGET
-      eventId={props.event_id ?? 26}
+      eventId={props.event_id ?? 121}
       select={'*'}
     >
       {({ loading, error, data, refetchGetAttendeesByEventId }) => {
@@ -36,7 +55,6 @@ const RiderProfileDisplayBlock = props => {
             keyboardShouldPersistTaps={'never'}
             listKey={'jmFAKtpE'}
             nestedScrollEnabled={false}
-            numColumns={1}
             onEndReachedThreshold={0.5}
             renderItem={({ item, index }) => {
               const listData = item;
@@ -48,23 +66,31 @@ const RiderProfileDisplayBlock = props => {
                     <View
                       style={StyleSheet.applyWidth(
                         {
-                          alignItems: 'stretch',
-                          justifyContent: 'center',
-                          marginBottom: 24,
+                          alignItems: 'center',
+                          backgroundColor: '"rgb(253, 253, 245)"',
+                          borderColor: theme.colors.border.brand,
+                          borderRadius: 12,
+                          marginLeft: 24,
+                          marginRight: 24,
+                          maxWidth: 120,
+                          paddingBottom: 12,
+                          paddingLeft: 16,
+                          paddingRight: 16,
+                          paddingTop: 12,
                         },
                         dimensions.width
                       )}
                     >
-                      {/* Image View */}
+                      {/* User Image View */}
                       <View>
                         {/* User image */}
                         <Image
                           resizeMode={'cover'}
                           source={{
-                            uri: 'https://d1nymbkeomeoqg.cloudfront.net/photos/23/51/356641_23375_XL.jpg',
+                            uri: `${listData?.attendee_safety_selfie}`,
                           }}
                           style={StyleSheet.applyWidth(
-                            { borderRadius: 100, height: 140, width: 140 },
+                            { borderRadius: 100, height: 110, width: 110 },
                             dimensions.width
                           )}
                         />
@@ -74,10 +100,12 @@ const RiderProfileDisplayBlock = props => {
                         style={StyleSheet.applyWidth(
                           {
                             alignItems: 'center',
-                            flexDirection: 'column',
-                            justifyContent: 'center',
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 8,
+                            justifyContent: 'flex-start',
                             marginTop: 6,
-                            maxWidth: '95%',
+                            maxHeight: 110,
                           },
                           dimensions.width
                         )}
@@ -85,25 +113,38 @@ const RiderProfileDisplayBlock = props => {
                         {/* Attendee Name Text */}
                         <Text
                           accessible={true}
-                          ellipsizeMode={'tail'}
                           numberOfLines={1}
                           style={StyleSheet.applyWidth(
                             {
                               alignSelf: 'center',
-                              color: theme.colors['Strong'],
+                              color: theme.colors.text.strong,
                               fontFamily: 'Inter_300Light',
-                              fontSize: 14,
+                              fontSize: 12,
                               lineHeight: 20,
-                              marginLeft: 8,
-                              marginRight: 8,
-                              paddingLeft: 8,
-                              paddingRight: 8,
-                              textAlign: 'center',
+                              textAlign: 'left',
                             },
                             dimensions.width
                           )}
                         >
                           {listData?.attendee_name}
+                        </Text>
+                        {/* Attendee Age Text */}
+                        <Text
+                          accessible={true}
+                          numberOfLines={1}
+                          style={StyleSheet.applyWidth(
+                            {
+                              alignSelf: 'center',
+                              color: palettes.Brand['Secondary Text'],
+                              fontFamily: 'Inter_300Light',
+                              fontSize: 12,
+                              lineHeight: 20,
+                              textAlign: 'center',
+                            },
+                            dimensions.width
+                          )}
+                        >
+                          {listData?.attendee_age}
                         </Text>
                       </View>
                     </View>
@@ -113,16 +154,17 @@ const RiderProfileDisplayBlock = props => {
             }}
             horizontal={false}
             inverted={false}
+            numColumns={2}
             showsHorizontalScrollIndicator={true}
             showsVerticalScrollIndicator={true}
             style={StyleSheet.applyWidth(
               {
                 alignContent: 'flex-start',
-                alignItems: 'center',
+                alignItems: 'stretch',
                 flexDirection: 'row',
                 flexWrap: 'wrap',
-                justifyContent: 'flex-start',
-                width: '100%',
+                gap: 32,
+                justifyContent: 'space-around',
               },
               dimensions.width
             )}

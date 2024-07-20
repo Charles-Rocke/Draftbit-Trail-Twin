@@ -5,9 +5,11 @@
         "usesNonExemptEncryption": false
       },
       "infoPlist": {},
-      "buildNumber": "1.0.0",
+      "buildNumber": "1.2.0",
       "supportsTablet": false,
-      "bundleIdentifier": "com.draftbit.untitledapp",
+      "backgroundColor": "#fdfdf5ff",
+      "usesAppleSignIn": false,
+      "bundleIdentifier": "com.trailtwin.trailtwin",
       "usesIcloudStorage": false
     },
     "web": {
@@ -24,20 +26,21 @@
     "scheme": "untitled-app",
     "splash": {
       "image": "./assets/app/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#FDFCF5"
     },
     "android": {
       "package": "com.draftbit.untitledapp",
       "permissions": [],
-      "versionCode": 1,
-      "adaptiveIcon": {}
+      "versionCode": 2,
+      "adaptiveIcon": {},
+      "backgroundColor": "#fdfdf5ff"
     },
     "plugins": [
       [
         "expo-screen-orientation",
         {
-          "initialOrientation": "ALL"
+          "initialOrientation": "PORTRAIT"
         }
       ],
       [
@@ -81,19 +84,20 @@
       ]
     ],
     "privacy": "unlisted",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "platforms": [
       "ios",
       "android",
       "web"
     ],
-    "description": "Trail Twin allows users to organize events, ride on their own time, and find partners anytime.",
-    "orientation": "default",
+    "description": "Trail Twin allows users to create events, ride on their own time, and find partners anytime.",
+    "orientation": "portrait",
     "iosStatusBar": {},
     "notification": {
+      "color": "#fdfdf5ff",
       "androidMode": "default"
     },
-    "backgroundColor": "#FFFFFF",
+    "backgroundColor": "#fdfdf5ff",
     "allowFontScaling": true,
     "androidStatusBar": {},
     "assetBundlePatterns": [

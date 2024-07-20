@@ -2,12 +2,17 @@ import React from 'react';
 import * as GlobalStyles from '../GlobalStyles.js';
 import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
 import Images from '../config/Images';
+import formatDate from '../global-functions/formatDate';
+import formatTags from '../global-functions/formatTags';
+import formatTime from '../global-functions/formatTime';
+import formatTotalRiders from '../global-functions/formatTotalRiders';
+import getAttendeesCount from '../global-functions/getAttendeesCount';
+import palettes from '../themes/palettes';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
 import useWindowDimensions from '../utils/useWindowDimensions';
 import {
   Button,
-  Circle,
   Divider,
   Icon,
   SimpleStyleFlatList,
@@ -30,7 +35,7 @@ const EventDetailsCardBlock = props => {
 
   return (
     <SupabaseEventsApi.FetchGetSingleEventGET
-      id={props.event_id ?? 26}
+      id={props.event_id ?? 121}
       select={'*'}
     >
       {({ loading, error, data, refetchGetSingleEvent }) => {
@@ -65,7 +70,7 @@ const EventDetailsCardBlock = props => {
                     style={StyleSheet.applyWidth(
                       {
                         alignItems: 'center',
-                        backgroundColor: 'rgb(245, 245, 245)',
+                        backgroundColor: '"rgb(253, 253, 245)"',
                       },
                       dimensions.width
                     )}
@@ -73,12 +78,7 @@ const EventDetailsCardBlock = props => {
                     {/* Image View */}
                     <View
                       style={StyleSheet.applyWidth(
-                        {
-                          borderRadius: 8,
-                          height: 240,
-                          width: '100%',
-                          zIndex: 1,
-                        },
+                        { height: 300, width: '100%', zIndex: 1 },
                         dimensions.width
                       )}
                     >
@@ -89,70 +89,16 @@ const EventDetailsCardBlock = props => {
                           { borderRadius: 8, height: '100%', width: '100%' },
                           dimensions.width
                         )}
-                      >
-                        <View
-                          style={StyleSheet.applyWidth(
-                            {
-                              alignItems: 'flex-end',
-                              flexDirection: 'row',
-                              marginTop: 32,
-                            },
-                            dimensions.width
-                          )}
-                        >
-                          {/* View 2 */}
-                          <View
-                            style={StyleSheet.applyWidth(
-                              {
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginLeft: 32,
-                              },
-                              dimensions.width
-                            )}
-                          >
-                            <Circle
-                              {...GlobalStyles.CircleStyles(theme)['Circle']
-                                .props}
-                              style={StyleSheet.applyWidth(
-                                StyleSheet.compose(
-                                  GlobalStyles.CircleStyles(theme)['Circle']
-                                    .style,
-                                  {
-                                    backgroundColor: 'rgb(245, 245, 245)',
-                                    marginLeft: 0,
-                                  }
-                                ),
-                                dimensions.width
-                              )}
-                            >
-                              {/* Back */}
-                              <Icon
-                                size={24}
-                                color={theme.colors['Strong']}
-                                name={'AntDesign/arrowleft'}
-                                style={StyleSheet.applyWidth(
-                                  {
-                                    marginBottom: 5,
-                                    marginLeft: 5,
-                                    marginRight: 5,
-                                    marginTop: 5,
-                                  },
-                                  dimensions.width
-                                )}
-                              />
-                            </Circle>
-                          </View>
-                        </View>
-                      </ImageBackground>
+                      />
                     </View>
                     {/* Event Desc and Details View */}
                     <View
                       style={StyleSheet.applyWidth(
                         {
                           alignItems: 'flex-start',
-                          paddingLeft: 32,
-                          paddingRight: 32,
+                          flexDirection: 'column',
+                          paddingLeft: 24,
+                          paddingRight: 24,
                           width: '100%',
                         },
                         dimensions.width
@@ -164,80 +110,239 @@ const EventDetailsCardBlock = props => {
                           {
                             alignItems: 'flex-start',
                             alignSelf: 'center',
-                            marginTop: 32,
-                            paddingRight: 32,
+                            marginTop: 24,
                             width: '100%',
                           },
                           dimensions.width
                         )}
                       >
-                        {/* Title and Riders View */}
+                        {/* Title and Riders View 2 */}
                         <View
                           style={StyleSheet.applyWidth(
                             {
-                              alignItems: 'center',
+                              alignContent: 'center',
+                              alignItems: 'stretch',
+                              alignSelf: 'auto',
                               flexDirection: 'row',
+                              gap: 0,
                               justifyContent: 'space-between',
-                              marginBottom: 8,
+                              marginBottom: 12,
+                              position: 'relative',
+                              width: '100%',
                             },
                             dimensions.width
                           )}
                         >
-                          <Text
-                            accessible={true}
-                            {...GlobalStyles.TextStyles(theme)['Text'].props}
-                            style={StyleSheet.applyWidth(
-                              StyleSheet.compose(
-                                GlobalStyles.TextStyles(theme)['Text'].style,
-                                { fontFamily: 'Inter_300Light', fontSize: 24 }
-                              ),
-                              dimensions.width
-                            )}
-                          >
-                            {listData?.event_name}
-                            {'\n'}
-                          </Text>
-                        </View>
-                        {/* Location and Trail View */}
-                        <View
-                          style={StyleSheet.applyWidth(
-                            {
-                              alignItems: 'center',
-                              flexDirection: 'row',
-                              marginBottom: 8,
-                            },
-                            dimensions.width
-                          )}
-                        >
-                          {/* Location Icon */}
-                          <Icon
-                            color={theme.colors['Strong']}
-                            name={'EvilIcons/location'}
-                            size={20}
+                          <View>
+                            <Text
+                              accessible={true}
+                              {...GlobalStyles.TextStyles(theme)['Text'].props}
+                              style={StyleSheet.applyWidth(
+                                StyleSheet.compose(
+                                  GlobalStyles.TextStyles(theme)['Text'].style,
+                                  {
+                                    fontFamily: 'Inter_400Regular',
+                                    fontSize: 18,
+                                  }
+                                ),
+                                dimensions.width
+                              )}
+                            >
+                              {listData?.event_name}
+                            </Text>
+                          </View>
+                          {/* Riders View */}
+                          <View
                             style={StyleSheet.applyWidth(
                               {
-                                backgroundColor: 'rgb(255, 255, 255)',
-                                marginRight: 8,
+                                alignItems: 'center',
+                                flexDirection: 'row',
+                                justifyContent: 'flex-start',
+                                position: 'relative',
                               },
                               dimensions.width
                             )}
-                          />
-                          {/* Location Text */}
+                          >
+                            <SupabaseEventsApi.FetchGetAttendeesByEventIdGET
+                              eventId={listData?.id}
+                              handlers={{
+                                onData: fetchData => {
+                                  try {
+                                    const num_attendees = fetchData?.length;
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                                },
+                              }}
+                              select={'*'}
+                            >
+                              {({
+                                loading,
+                                error,
+                                data,
+                                refetchGetAttendeesByEventId,
+                              }) => {
+                                const fetchData = data?.json;
+                                if (loading) {
+                                  return <ActivityIndicator />;
+                                }
+
+                                if (
+                                  error ||
+                                  data?.status < 200 ||
+                                  data?.status >= 300
+                                ) {
+                                  return <ActivityIndicator />;
+                                }
+
+                                return (
+                                  <>
+                                    {/* Riders Text */}
+                                    <Text
+                                      accessible={true}
+                                      ellipsizeMode={'tail'}
+                                      numberOfLines={2}
+                                      style={StyleSheet.applyWidth(
+                                        {
+                                          color:
+                                            palettes.Brand['Secondary Text'],
+                                          fontFamily: 'Inter_300Light',
+                                          fontSize: 12,
+                                          lineHeight: 24,
+                                        },
+                                        dimensions.width
+                                      )}
+                                    >
+                                      {formatTotalRiders(fetchData?.length)}
+                                      {' Riders'}
+                                    </Text>
+                                  </>
+                                );
+                              }}
+                            </SupabaseEventsApi.FetchGetAttendeesByEventIdGET>
+                          </View>
+                        </View>
+                        {/* Trails View */}
+                        <View
+                          style={StyleSheet.applyWidth(
+                            {
+                              alignItems: 'center',
+                              flexDirection: 'row',
+                              marginBottom: 1,
+                            },
+                            dimensions.width
+                          )}
+                        >
+                          <SupabaseEventsApi.FetchGetTrailNamesGET
+                            handlers={{
+                              onData: fetchData => {
+                                try {
+                                  getAttendeesCount(listData);
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              },
+                            }}
+                            id={listData?.id}
+                            trail_names={'trail_names'}
+                          >
+                            {({
+                              loading,
+                              error,
+                              data,
+                              refetchGetTrailNames,
+                            }) => {
+                              const fetchData = data?.json;
+                              if (loading) {
+                                return <ActivityIndicator />;
+                              }
+
+                              if (
+                                error ||
+                                data?.status < 200 ||
+                                data?.status >= 300
+                              ) {
+                                return <ActivityIndicator />;
+                              }
+
+                              return (
+                                <SimpleStyleFlatList
+                                  data={fetchData}
+                                  horizontal={false}
+                                  inverted={false}
+                                  keyExtractor={(listData, index) =>
+                                    listData?.id ??
+                                    listData?.uuid ??
+                                    index.toString()
+                                  }
+                                  keyboardShouldPersistTaps={'never'}
+                                  listKey={JSON.stringify(fetchData)}
+                                  nestedScrollEnabled={false}
+                                  numColumns={1}
+                                  onEndReachedThreshold={0.5}
+                                  renderItem={({ item, index }) => {
+                                    const listData = item;
+                                    return (
+                                      <>
+                                        {/* Trails Text */}
+                                        <Text
+                                          accessible={true}
+                                          ellipsizeMode={'tail'}
+                                          numberOfLines={2}
+                                          style={StyleSheet.applyWidth(
+                                            {
+                                              color:
+                                                palettes.Brand[
+                                                  'Secondary Text'
+                                                ],
+                                              fontFamily: 'Inter_300Light',
+                                              fontSize: 12,
+                                              lineHeight: 24,
+                                            },
+                                            dimensions.width
+                                          )}
+                                        >
+                                          {'Trails Attending: '}
+                                          {listData?.trail_names}
+                                        </Text>
+                                      </>
+                                    );
+                                  }}
+                                  showsHorizontalScrollIndicator={true}
+                                  showsVerticalScrollIndicator={true}
+                                />
+                              );
+                            }}
+                          </SupabaseEventsApi.FetchGetTrailNamesGET>
+                        </View>
+                        {/* Address View */}
+                        <View
+                          style={StyleSheet.applyWidth(
+                            {
+                              alignItems: 'center',
+                              flexDirection: 'row',
+                              marginBottom: 1,
+                            },
+                            dimensions.width
+                          )}
+                        >
+                          {/* Address Text */}
                           <Text
                             accessible={true}
                             ellipsizeMode={'tail'}
                             numberOfLines={2}
                             style={StyleSheet.applyWidth(
                               {
-                                color: theme.colors['Medium'],
+                                color: palettes.Brand['Secondary Text'],
                                 fontFamily: 'Inter_300Light',
-                                fontSize: 14,
+                                fontSize: 12,
                                 lineHeight: 24,
                               },
                               dimensions.width
                             )}
                           >
-                            {null}
+                            {'Address: '}
+                            {listData?.address}
                           </Text>
                         </View>
                         {/* Date View */}
@@ -246,24 +351,11 @@ const EventDetailsCardBlock = props => {
                             {
                               alignItems: 'center',
                               flexDirection: 'row',
-                              marginBottom: 8,
+                              marginBottom: 1,
                             },
                             dimensions.width
                           )}
                         >
-                          {/* Date Icon */}
-                          <Icon
-                            color={theme.colors['Strong']}
-                            name={'AntDesign/calendar'}
-                            size={20}
-                            style={StyleSheet.applyWidth(
-                              {
-                                backgroundColor: 'rgb(255, 255, 255)',
-                                marginRight: 8,
-                              },
-                              dimensions.width
-                            )}
-                          />
                           {/* Date Text */}
                           <Text
                             accessible={true}
@@ -271,57 +363,73 @@ const EventDetailsCardBlock = props => {
                             numberOfLines={2}
                             style={StyleSheet.applyWidth(
                               {
-                                color: theme.colors['Medium'],
+                                color: palettes.Brand['Secondary Text'],
                                 fontFamily: 'Inter_300Light',
-                                fontSize: 14,
+                                fontSize: 12,
                                 lineHeight: 24,
                               },
                               dimensions.width
                             )}
                           >
-                            {null}
-                            {' - '}
-                            {null}
-                          </Text>
-                        </View>
-                        {/* Tags View */}
-                        <View
-                          style={StyleSheet.applyWidth(
-                            {
-                              alignItems: 'center',
-                              flexDirection: 'row',
-                              flexWrap: 'wrap',
-                            },
-                            dimensions.width
-                          )}
-                        >
-                          <Text
-                            accessible={true}
-                            style={StyleSheet.applyWidth(
-                              {
-                                color: theme.colors.medium,
-                                fontFamily: 'Inter_200ExtraLight',
-                                fontSize: 12,
-                              },
-                              dimensions.width
-                            )}
-                          >
-                            {null}
+                            {'Date: '}
+                            {formatDate(listData?.date)}
+                            {', '}
+                            {formatTime(listData?.start_time)}
                           </Text>
                         </View>
                       </View>
                       {/* Divider 3 */}
                       <Divider
-                        color={theme.colors.divider}
+                        color={theme.colors.border.brand}
                         {...GlobalStyles.DividerStyles(theme)['Divider'].props}
                         style={StyleSheet.applyWidth(
                           StyleSheet.compose(
                             GlobalStyles.DividerStyles(theme)['Divider'].style,
-                            { marginBottom: 32, marginTop: 32, width: '100%' }
+                            { marginBottom: 24, marginTop: 24, width: '100%' }
                           ),
                           dimensions.width
                         )}
                       />
+                      {/* Tags View 3 */}
+                      <View
+                        style={StyleSheet.applyWidth(
+                          {
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            flexWrap: 'nowrap',
+                            marginBottom: 12,
+                          },
+                          dimensions.width
+                        )}
+                      >
+                        {/* Tags Icon */}
+                        <Icon
+                          color={theme.colors.text.strong}
+                          name={'AntDesign/tagso'}
+                          size={20}
+                          style={StyleSheet.applyWidth(
+                            {
+                              backgroundColor: '"rgb(253, 253, 245)"',
+                              marginRight: 8,
+                            },
+                            dimensions.width
+                          )}
+                        />
+                        {/* Tags Text */}
+                        <Text
+                          accessible={true}
+                          style={StyleSheet.applyWidth(
+                            {
+                              color: palettes.Brand['Secondary Text'],
+                              fontFamily: 'Inter_400Regular',
+                              fontSize: 16,
+                            },
+                            dimensions.width
+                          )}
+                        >
+                          {formatTags(listData?.tags)}
+                        </Text>
+                      </View>
                       {/* Desc View */}
                       <View
                         style={StyleSheet.applyWidth(
@@ -329,34 +437,85 @@ const EventDetailsCardBlock = props => {
                           dimensions.width
                         )}
                       >
-                        {/* Short Description */}
-                        <Text
-                          accessible={true}
-                          ellipsizeMode={'tail'}
-                          style={StyleSheet.applyWidth(
-                            {
-                              color: theme.colors['Medium'],
-                              fontFamily: 'Inter_300Light',
-                              fontSize: 14,
-                              lineHeight: 24,
-                              textAlign: 'left',
-                            },
-                            dimensions.width
-                          )}
+                        <SupabaseEventsApi.FetchGetEventDescriptionGET
+                          event_description={'event_description'}
+                          id={listData?.id}
                         >
-                          {
-                            'Short description describing the ride. Maybe we could put a word cap to keep it short and simple.'
-                          }
-                        </Text>
+                          {({
+                            loading,
+                            error,
+                            data,
+                            refetchGetEventDescription,
+                          }) => {
+                            const fetchData = data?.json;
+                            if (loading) {
+                              return <ActivityIndicator />;
+                            }
+
+                            if (
+                              error ||
+                              data?.status < 200 ||
+                              data?.status >= 300
+                            ) {
+                              return <ActivityIndicator />;
+                            }
+
+                            return (
+                              <SimpleStyleFlatList
+                                data={fetchData}
+                                horizontal={false}
+                                inverted={false}
+                                keyExtractor={(listData, index) =>
+                                  listData?.id ??
+                                  listData?.uuid ??
+                                  index.toString()
+                                }
+                                keyboardShouldPersistTaps={'never'}
+                                listKey={JSON.stringify(fetchData)}
+                                nestedScrollEnabled={false}
+                                numColumns={1}
+                                onEndReachedThreshold={0.5}
+                                renderItem={({ item, index }) => {
+                                  const listData = item;
+                                  return (
+                                    <>
+                                      {/* Description */}
+                                      <Text
+                                        accessible={true}
+                                        ellipsizeMode={'tail'}
+                                        style={StyleSheet.applyWidth(
+                                          {
+                                            color:
+                                              palettes.Brand['Secondary Text'],
+                                            fontFamily: 'Inter_300Light',
+                                            fontSize: 12,
+                                            lineHeight: 24,
+                                            textAlign: 'left',
+                                          },
+                                          dimensions.width
+                                        )}
+                                      >
+                                        {'Description: '}
+                                        {listData?.event_description}
+                                      </Text>
+                                    </>
+                                  );
+                                }}
+                                showsHorizontalScrollIndicator={true}
+                                showsVerticalScrollIndicator={true}
+                              />
+                            );
+                          }}
+                        </SupabaseEventsApi.FetchGetEventDescriptionGET>
                       </View>
                       {/* Divider 2 */}
                       <Divider
-                        color={theme.colors.divider}
+                        color={theme.colors.border.brand}
                         {...GlobalStyles.DividerStyles(theme)['Divider'].props}
                         style={StyleSheet.applyWidth(
                           StyleSheet.compose(
                             GlobalStyles.DividerStyles(theme)['Divider'].style,
-                            { marginBottom: 32, marginTop: 32, width: '100%' }
+                            { marginBottom: 48, marginTop: 24, width: '100%' }
                           ),
                           dimensions.width
                         )}
@@ -364,7 +523,7 @@ const EventDetailsCardBlock = props => {
                       {/* Button View */}
                       <View
                         style={StyleSheet.applyWidth(
-                          { marginBottom: 32, marginTop: 32, width: '100%' },
+                          { width: '100%' },
                           dimensions.width
                         )}
                       >
@@ -374,7 +533,7 @@ const EventDetailsCardBlock = props => {
                           onPress={() => {
                             try {
                               navigation.navigate('JoinEventScreen', {
-                                event_id: props.event_id ?? 26,
+                                event_id: props.event_id ?? 121,
                               });
                             } catch (err) {
                               console.error(err);
@@ -385,9 +544,10 @@ const EventDetailsCardBlock = props => {
                             StyleSheet.compose(
                               GlobalStyles.ButtonStyles(theme)['Button'].style,
                               {
-                                backgroundColor: 'rgb(48, 93, 35)',
+                                backgroundColor: '"rgb(48, 93, 35)"',
+                                borderRadius: 12,
                                 fontFamily: 'Inter_300Light',
-                                fontSize: 18,
+                                fontSize: 16,
                               }
                             ),
                             dimensions.width
@@ -397,103 +557,179 @@ const EventDetailsCardBlock = props => {
                       </View>
                       {/* Divider 4 */}
                       <Divider
-                        color={theme.colors.divider}
+                        color={theme.colors.border.brand}
                         {...GlobalStyles.DividerStyles(theme)['Divider'].props}
                         style={StyleSheet.applyWidth(
                           StyleSheet.compose(
                             GlobalStyles.DividerStyles(theme)['Divider'].style,
-                            { marginBottom: 32, marginTop: 32, width: '100%' }
+                            { marginBottom: 24, marginTop: 48, width: '100%' }
                           ),
                           dimensions.width
                         )}
                       />
-                      {/* Host and Desc View */}
+                      {/* User */}
                       <View
                         style={StyleSheet.applyWidth(
                           {
                             alignItems: 'center',
                             flexDirection: 'row',
                             justifyContent: 'space-between',
+                            width: '100%',
                           },
                           dimensions.width
                         )}
                       >
-                        {/* User image */}
-                        <Image
-                          resizeMode={'cover'}
-                          source={{
-                            uri: 'https://d1nymbkeomeoqg.cloudfront.net/photos/27/68/398347_13844_XL.jpg',
-                          }}
+                        {/* Details */}
+                        <View
                           style={StyleSheet.applyWidth(
                             {
-                              borderRadius: 100,
-                              height: 80,
-                              marginRight: 16,
-                              width: 80,
+                              alignItems: 'center',
+                              borderColor: theme.colors.border.brand,
+                              borderRadius: 12,
+                              borderWidth: 1,
+                              flexDirection: 'row',
+                              paddingBottom: 16,
+                              paddingLeft: 16,
+                              paddingRight: 16,
+                              paddingTop: 16,
+                              width: '100%',
                             },
                             dimensions.width
                           )}
-                        />
-                        {/* Hosted by and Name View */}
-                        <View
-                          style={StyleSheet.applyWidth(
-                            { alignItems: 'flex-start' },
-                            dimensions.width
-                          )}
                         >
-                          <Text
-                            accessible={true}
-                            {...GlobalStyles.TextStyles(theme)['Text'].props}
+                          {/* Host Photo */}
+                          <Image
+                            resizeMode={'cover'}
+                            source={{ uri: `${listData?.safety_selfie}` }}
                             style={StyleSheet.applyWidth(
-                              StyleSheet.compose(
-                                GlobalStyles.TextStyles(theme)['Text'].style,
-                                { fontFamily: 'Inter_300Light', fontSize: 18 }
-                              ),
+                              { borderRadius: 100, height: 80, width: 80 },
                               dimensions.width
                             )}
+                          />
+                          <SupabaseEventsApi.FetchGetHostInfoGET
+                            host_age={'*'}
+                            id={listData?.id}
+                            saftey_selfie={'*'}
                           >
-                            {'Organised by\n'}
-                          </Text>
-                          {/* Name and Age View */}
-                          <View
-                            style={StyleSheet.applyWidth(
-                              {
-                                alignItems: 'center',
-                                flex: 1,
-                                flexDirection: 'row',
-                                justifyContent: 'center',
-                                marginTop: 8,
-                              },
-                              dimensions.width
-                            )}
-                          >
-                            {/* Host Name Text */}
-                            <Text
-                              accessible={true}
-                              style={StyleSheet.applyWidth(
-                                {
-                                  color: theme.colors['Strong'],
-                                  fontFamily: 'Inter_300Light',
-                                  fontSize: 14,
-                                  lineHeight: 20,
-                                  marginRight: 12,
-                                  opacity: 1,
-                                },
-                                dimensions.width
-                              )}
-                            >
-                              {listData?.host_name}
-                            </Text>
-                          </View>
+                            {({ loading, error, data, refetchGetHostInfo }) => {
+                              const fetchData = data?.json;
+                              if (loading) {
+                                return <ActivityIndicator />;
+                              }
+
+                              if (
+                                error ||
+                                data?.status < 200 ||
+                                data?.status >= 300
+                              ) {
+                                return <ActivityIndicator />;
+                              }
+
+                              return (
+                                <SimpleStyleFlatList
+                                  data={fetchData}
+                                  horizontal={false}
+                                  inverted={false}
+                                  keyExtractor={(listData, index) =>
+                                    listData?.id ??
+                                    listData?.uuid ??
+                                    index.toString()
+                                  }
+                                  keyboardShouldPersistTaps={'never'}
+                                  listKey={JSON.stringify(fetchData)}
+                                  nestedScrollEnabled={false}
+                                  numColumns={1}
+                                  onEndReachedThreshold={0.5}
+                                  renderItem={({ item, index }) => {
+                                    const listData = item;
+                                    return (
+                                      <View>
+                                        <Text
+                                          accessible={true}
+                                          style={StyleSheet.applyWidth(
+                                            {
+                                              color: theme.colors.text.strong,
+                                              fontFamily: 'Inter_700Bold',
+                                              fontSize: 14,
+                                              marginLeft: 20,
+                                            },
+                                            dimensions.width
+                                          )}
+                                        >
+                                          {'Organized by'}
+                                        </Text>
+
+                                        <View
+                                          style={StyleSheet.applyWidth(
+                                            {
+                                              alignItems: 'center',
+                                              flexDirection: 'row',
+                                              gap: 8,
+                                              justifyContent: 'flex-start',
+                                              marginTop: 8,
+                                            },
+                                            dimensions.width
+                                          )}
+                                        >
+                                          {/* Host Name */}
+                                          <Text
+                                            accessible={true}
+                                            style={StyleSheet.applyWidth(
+                                              {
+                                                color: theme.colors.text.strong,
+                                                fontFamily: 'Inter_500Medium',
+                                                fontSize: 12,
+                                                marginLeft: 20,
+                                              },
+                                              dimensions.width
+                                            )}
+                                          >
+                                            {listData?.host_name}
+                                          </Text>
+                                          {/* Host age */}
+                                          <Text
+                                            accessible={true}
+                                            {...GlobalStyles.TextStyles(theme)[
+                                              'Text'
+                                            ].props}
+                                            style={StyleSheet.applyWidth(
+                                              StyleSheet.compose(
+                                                GlobalStyles.TextStyles(theme)[
+                                                  'Text'
+                                                ].style,
+                                                {
+                                                  color:
+                                                    palettes.Brand[
+                                                      'Secondary Text'
+                                                    ],
+                                                  fontFamily: 'Inter_300Light',
+                                                  fontSize: 12,
+                                                }
+                                              ),
+                                              dimensions.width
+                                            )}
+                                          >
+                                            {listData?.host_age}
+                                          </Text>
+                                        </View>
+                                      </View>
+                                    );
+                                  }}
+                                  showsHorizontalScrollIndicator={true}
+                                  showsVerticalScrollIndicator={true}
+                                />
+                              );
+                            }}
+                          </SupabaseEventsApi.FetchGetHostInfoGET>
                         </View>
                       </View>
                       <Divider
-                        color={theme.colors.divider}
+                        color={theme.colors.border.brand}
                         {...GlobalStyles.DividerStyles(theme)['Divider'].props}
                         style={StyleSheet.applyWidth(
                           StyleSheet.compose(
                             GlobalStyles.DividerStyles(theme)['Divider'].style,
-                            { marginBottom: 32, marginTop: 32, width: '100%' }
+                            { marginTop: 24, width: '100%' }
                           ),
                           dimensions.width
                         )}
