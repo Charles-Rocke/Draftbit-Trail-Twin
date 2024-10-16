@@ -10,6 +10,7 @@ async function openCamera({
   quality = 1,
   showAlertOnPermissionError = true,
   permissionErrorMessage = 'Sorry, we need camera permissions to make this work.',
+  outputBase64 = true,
 }) {
   if (Platform.OS !== 'web') {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -42,7 +43,9 @@ async function openCamera({
     console.error('No assets were returned with the open camera action');
     return;
   }
-
+  if (!outputBase64) {
+    return assets[0];
+  }
   return await assetToBase64(assets[0]);
 }
 

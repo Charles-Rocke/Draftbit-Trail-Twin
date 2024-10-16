@@ -1,5 +1,3 @@
-import React from 'react';
-
 const formatDate = date => {
   if (!(date instanceof Date)) {
     date = new Date(date);

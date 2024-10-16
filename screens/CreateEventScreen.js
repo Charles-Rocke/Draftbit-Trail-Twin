@@ -1,94 +1,60 @@
 import React from 'react';
-import * as GlobalStyles from '../GlobalStyles.js';
+import {
+  Button,
+  DatePicker,
+  LoadingIndicator,
+  MultiSelectPicker,
+  Picker,
+  ScreenContainer,
+  SimpleStyleKeyboardAwareScrollView,
+  SimpleStyleScrollView,
+  Slider,
+  TextInput,
+  withTheme,
+} from '@draftbit/ui';
+import { useIsFocused } from '@react-navigation/native';
+import { Text, View } from 'react-native';
 import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
 import * as GlobalVariables from '../config/GlobalVariableContext';
 import * as base64decode from '../custom-files/base64decode';
 import * as supabase from '../custom-files/supabase';
-import checkEventLimit from '../global-functions/checkEventLimit';
+import formatAmPm from '../global-functions/formatAmPm';
+import formatHours from '../global-functions/formatHours';
+import formatRideLength from '../global-functions/formatRideLength';
+import posthogEventCapture from '../global-functions/posthogEventCapture';
 import palettes from '../themes/palettes';
 import Breakpoints from '../utils/Breakpoints';
 import * as StyleSheet from '../utils/StyleSheet';
-import openCameraUtil from '../utils/openCamera';
-import openImagePickerUtil from '../utils/openImagePicker';
 import parseBoolean from '../utils/parseBoolean';
 import showAlertUtil from '../utils/showAlert';
 import useWindowDimensions from '../utils/useWindowDimensions';
-import {
-  Button,
-  DatePicker,
-  Divider,
-  Icon,
-  MultiSelectPicker,
-  ScreenContainer,
-  SimpleStyleKeyboardAwareScrollView,
-  SimpleStyleScrollView,
-  TextInput,
-  Touchable,
-  withTheme,
-} from '@draftbit/ui';
-import { useIsFocused } from '@react-navigation/native';
-import { Image, Text, View } from 'react-native';
 
 const CreateEventScreen = props => {
   const { theme, navigation } = props;
   const dimensions = useWindowDimensions();
   const Constants = GlobalVariables.useValues();
   const Variables = Constants;
-  const [addressInput, setAddressInput] = React.useState('');
-  const [addressInputV1, setAddressInputV1] = React.useState('');
+  const setGlobalVariableValue = GlobalVariables.useSetValue();
+  const [ampm, setAmpm] = React.useState('AM');
   const [dateInput, setDateInput] = React.useState(new Date());
-  const [dateInputV1, setDateInputV1] = React.useState(new Date());
-  const [dateInputValue, setDateInputValue] = React.useState('');
-  const [datePickerValue, setDatePickerValue] = React.useState(new Date());
-  const [descriptionInputV1, setDescriptionInputV1] = React.useState('');
-  const [emailInput, setEmailInput] = React.useState('');
-  const [eventNameInputV1, setEventNameInputV1] = React.useState('');
-  const [eventNameInputValue, setEventNameInputValue] = React.useState('');
+  const [descriptionInput, setDescriptionInput] = React.useState('');
   const [eventTypeInput, setEventTypeInput] = React.useState('');
-  const [eventTypeInputV1, setEventTypeInputV1] = React.useState('');
-  const [hostAgeInput, setHostAgeInput] = React.useState('');
-  const [hostAgeInputV1, setHostAgeInputV1] = React.useState(0);
-  const [hostNameInput, setHostNameInput] = React.useState('');
-  const [hostNameInputV1, setHostNameInputV1] = React.useState('');
-  const [imageName, setImageName] = React.useState('');
-  const [imageNameDbUrl, setImageNameDbUrl] = React.useState('');
-  const [invitesInputArrayV1, setInvitesInputArrayV1] = React.useState([]);
-  const [invitesInputIntV1, setInvitesInputIntV1] = React.useState(0);
-  const [invitesInputV1, setInvitesInputV1] = React.useState([]);
-  const [invitesInputValue, setInvitesInputValue] = React.useState([]);
-  const [isSafetySelfie, setIsSafetySelfie] = React.useState(false);
-  const [multiSelectPicker2Value, setMultiSelectPicker2Value] = React.useState(
-    []
-  );
-  const [multiSelectPickerValue, setMultiSelectPickerValue] = React.useState(
-    []
-  );
-  const [multiSelectPickerValue2, setMultiSelectPickerValue2] = React.useState(
-    []
-  );
-  const [numberInput2Value, setNumberInput2Value] = React.useState('');
-  const [numberInputValue, setNumberInputValue] = React.useState('');
-  const [numberInputValue2, setNumberInputValue2] = React.useState('');
+  const [maxPartySizeInput, setMaxPartySizeInput] = React.useState(15);
   const [partySizeInput, setPartySizeInput] = React.useState('');
-  const [partySizeInputV1, setPartySizeInputV1] = React.useState(0);
-  const [pickerValue, setPickerValue] = React.useState('');
-  const [pickerValue2, setPickerValue2] = React.useState('');
-  const [pickerValue3, setPickerValue3] = React.useState('');
   const [rideNameInput, setRideNameInput] = React.useState('');
-  const [safetySelfie, setSafetySelfie] = React.useState('');
-  const [safteySelfiePath, setSafteySelfiePath] = React.useState('');
-  const [startTimeInput, setStartTimeInput] = React.useState(new Date());
-  const [startTimeInputV1, setStartTimeInputV1] = React.useState(new Date());
-  const [startTimeInputValue, setStartTimeInputValue] = React.useState('');
-  const [startTimeInputValue2, setStartTimeInputValue2] = React.useState('');
-  const [stepperValue, setStepperValue] = React.useState('');
-  const [stepperValue2, setStepperValue2] = React.useState('');
-  const [tagsInputV1, setTagsInputV1] = React.useState([]);
-  const [tagsInputValue, setTagsInputValue] = React.useState([]);
-  const [textAreaValue, setTextAreaValue] = React.useState('');
-  const [textInputValue, setTextInputValue] = React.useState('');
+  const [rideTimeLengthInput, setRideTimeLengthInput] = React.useState(0);
+  const [skillLevelInput, setSkillLevelInput] = React.useState([]);
+  const [startTimeFilterInput, setStartTimeFilterInput] = React.useState(0);
+  const [startTimeInput, setStartTimeInput] = React.useState(11);
+  const [tagsInput, setTagsInput] = React.useState([]);
   const [trailNameInput, setTrailNameInput] = React.useState('');
-  const [trailNameInputV1, setTrailNameInputV1] = React.useState('');
+  const checkForGroupRide = tags => {
+    if (tags.includes('Group Ride')) {
+      return 'yes';
+    }
+    return null;
+  };
+
   const convertDateToCustomFormat = isoString => {
     // console.log("Date String:", isoString);
     // const date = new Date(isoString);
@@ -116,6 +82,30 @@ const CreateEventScreen = props => {
     return `${year}-${month}-${day}`;
   };
 
+  const uploadToSupabase = async (
+    imageName,
+    arrayBuffer,
+    mimeType,
+    bucketPath
+  ) => {
+    // Upload the arrayBuffer to Supabase
+    const { data: uploadData, error: uploadError } =
+      await supabase.default.storage
+        .from('photos')
+        .upload(`${bucketPath}/${imageName}`, arrayBuffer, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: mimeType,
+        });
+
+    if (uploadError) {
+      console.error('Upload failed:', uploadError);
+      return `Upload failed: ${uploadError.message}`;
+    }
+    console.log('Upload successful!', uploadData.path);
+    return { uploadData };
+  };
+
   const convertTimeToCustomFormat = isoString => {
     // Type the code for the body of your function or hook here.
     // Functions can be triggered via Button/Touchable actions.
@@ -133,6 +123,7 @@ line two` ) and will not work with special characters inside of quotes ( example
 
   const checkBase64Data = base64Data => {
     // Ensure base64 data is provided
+    console.log('In create event screen check for base64data');
     if (!base64Data) {
       console.error('No base64 data provided');
       return { error: 'No base64 data provided' };
@@ -173,25 +164,6 @@ line two` ) and will not work with special characters inside of quotes ( example
       return 'File conversion failed, arrayBuffer size is 0 bytes.';
     }
     return { success: true };
-  };
-
-  const uploadToSupabase = async (imageName, arrayBuffer, mimeType) => {
-    // Upload the arrayBuffer to Supabase
-    const { data: uploadData, error: uploadError } =
-      await supabase.default.storage
-        .from('safety_selfies')
-        .upload(imageName, arrayBuffer, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: mimeType,
-        });
-
-    if (uploadError) {
-      console.error('Upload failed:', uploadError);
-      return `Upload failed: ${uploadError.message}`;
-    }
-    console.log('Upload successful!', uploadData.path);
-    return { uploadData };
   };
 
   const convertUserImagePathToLink = (imagePath, supabaseUrl) => {
@@ -258,9 +230,10 @@ line two` ) and will not work with special characters inside of quotes ( example
       if (!isFocused) {
         return;
       }
-      setSafetySelfie(null);
-      setIsSafetySelfie(parseBoolean(false));
-      console.log(isSafetySelfie);
+      setGlobalVariableValue({
+        key: 'loading',
+        value: false,
+      });
     } catch (err) {
       console.error(err);
     }
@@ -270,7 +243,7 @@ line two` ) and will not work with special characters inside of quotes ( example
     <ScreenContainer
       hasBottomSafeArea={false}
       hasSafeArea={false}
-      hasTopSafeArea={true}
+      hasTopSafeArea={false}
       scrollable={true}
       style={StyleSheet.applyWidth(
         { backgroundColor: '"rgb(253, 253, 245)"' },
@@ -296,9 +269,9 @@ line two` ) and will not work with special characters inside of quotes ( example
           <View
             style={StyleSheet.applyWidth(
               {
-                gap: 24,
+                gap: 48,
                 justifyContent: 'space-between',
-                marginBottom: 64,
+                marginBottom: 256,
                 marginTop: 64,
                 paddingLeft: 32,
                 paddingRight: 32,
@@ -306,159 +279,23 @@ line two` ) and will not work with special characters inside of quotes ( example
               dimensions.width
             )}
           >
-            {/* Title */}
-            <Text
-              accessible={true}
-              style={StyleSheet.applyWidth(
-                {
-                  color: theme.colors.text.strong,
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 18,
-                  opacity: 0.8,
-                },
-                dimensions.width
-              )}
-            >
-              {'Create a Ride'}
-            </Text>
-            <Divider
-              color={theme.colors.border.brand}
-              {...GlobalStyles.DividerStyles(theme)['Divider'].props}
-              style={StyleSheet.applyWidth(
-                StyleSheet.compose(
-                  GlobalStyles.DividerStyles(theme)['Divider'].style,
-                  { marginBottom: 12, marginTop: 12 }
-                ),
-                dimensions.width
-              )}
-            />
-            {/* Host Name */}
-            <View>
-              {/* Label */}
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
-                    fontSize: 14,
-                    opacity: 0.85,
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Your Name'}
-              </Text>
-              {/* hostNameInput */}
-              <TextInput
-                autoCapitalize={'none'}
-                autoCorrect={true}
-                changeTextDelay={500}
-                onChangeText={newHostNameInputValue => {
-                  try {
-                    setHostNameInputV1(newHostNameInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                webShowOutline={true}
-                maxLength={25}
-                placeholder={'Enter your name'}
-                placeholderTextColor={theme.colors.text.light}
-                style={StyleSheet.applyWidth(
-                  {
-                    backgroundColor: palettes.App['Custom Color'],
-                    borderBottomWidth: 1,
-                    borderColor: theme.colors.text.light,
-                    borderLeftWidth: 1,
-                    borderRadius: 12,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
-                    color: palettes.Brand['Secondary Text'],
-                    fontFamily: 'Inter_300Light',
-                    height: 48,
-                    marginTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 20,
-                    paddingRight: 8,
-                    paddingTop: 8,
-                  },
-                  dimensions.width
-                )}
-                value={hostNameInputV1}
-              />
-            </View>
-            {/* Host Age */}
-            <View>
-              {/* Label */}
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
-                    fontSize: 14,
-                    opacity: 0.85,
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Your Age'}
-              </Text>
-              {/* hostAgeInput */}
-              <TextInput
-                autoCapitalize={'none'}
-                autoCorrect={true}
-                changeTextDelay={500}
-                onChangeText={newHostAgeInputValue => {
-                  try {
-                    setHostAgeInputV1(newHostAgeInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                webShowOutline={true}
-                maxLength={2}
-                placeholder={'Enter your age'}
-                placeholderTextColor={theme.colors.text.light}
-                style={StyleSheet.applyWidth(
-                  {
-                    backgroundColor: palettes.App['Custom Color'],
-                    borderBottomWidth: 1,
-                    borderColor: theme.colors.text.light,
-                    borderLeftWidth: 1,
-                    borderRadius: 12,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
-                    color: palettes.Brand['Secondary Text'],
-                    fontFamily: 'Inter_300Light',
-                    height: 48,
-                    marginTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 20,
-                    paddingRight: 8,
-                    paddingTop: 8,
-                  },
-                  dimensions.width
-                )}
-                value={hostAgeInputV1}
-              />
-            </View>
             {/* Ride Name */}
             <View>
               {/* Label */}
               <Text
                 accessible={true}
+                selectable={false}
                 style={StyleSheet.applyWidth(
                   {
                     color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 16,
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Ride Name'}
+                {'Event Name *'}
               </Text>
               {/* rideNameInput */}
               <TextInput
@@ -473,12 +310,13 @@ line two` ) and will not work with special characters inside of quotes ( example
                   }
                 }}
                 webShowOutline={true}
-                maxLength={25}
-                placeholder={'Enter a name for the ride'}
+                maxLength={64}
+                placeholder={'Enter a name for the event'}
                 placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: palettes.App['Custom Color'],
+                    backgroundColor:
+                      palettes['Trail Twin']['White - Trail Twin'],
                     borderBottomWidth: 1,
                     borderColor: theme.colors.text.light,
                     borderLeftWidth: 1,
@@ -488,7 +326,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                     color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
                     height: 48,
-                    marginTop: 8,
+                    marginTop: 12,
                     paddingBottom: 8,
                     paddingLeft: 20,
                     paddingRight: 8,
@@ -504,16 +342,18 @@ line two` ) and will not work with special characters inside of quotes ( example
               {/* Label */}
               <Text
                 accessible={true}
+                selectable={false}
                 style={StyleSheet.applyWidth(
                   {
                     color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 16,
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Trail Names'}
+                {'Trails *'}
               </Text>
               {/* trailNameInput */}
               <TextInput
@@ -522,18 +362,19 @@ line two` ) and will not work with special characters inside of quotes ( example
                 changeTextDelay={500}
                 onChangeText={newTrailNameInputValue => {
                   try {
-                    setTrailNameInputV1(newTrailNameInputValue);
+                    setTrailNameInput(newTrailNameInputValue);
                   } catch (err) {
                     console.error(err);
                   }
                 }}
                 webShowOutline={true}
-                maxLength={50}
-                placeholder={'Enter the name of the trails you plan to ride'}
+                maxLength={64}
+                placeholder={'Enter names of trails or trail network'}
                 placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: palettes.App['Custom Color'],
+                    backgroundColor:
+                      palettes['Trail Twin']['White - Trail Twin'],
                     borderBottomWidth: 1,
                     borderColor: theme.colors.text.light,
                     borderLeftWidth: 1,
@@ -543,7 +384,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                     color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
                     height: 48,
-                    marginTop: 8,
+                    marginTop: 12,
                     paddingBottom: 8,
                     paddingLeft: 20,
                     paddingRight: 8,
@@ -551,81 +392,126 @@ line two` ) and will not work with special characters inside of quotes ( example
                   },
                   dimensions.width
                 )}
-                value={trailNameInputV1}
+                value={trailNameInput}
               />
             </View>
-            {/* Trail Address */}
-            <View>
-              {/* Label */}
-              <Text
-                accessible={true}
+            {/* Meetup Location */}
+            <View
+              style={StyleSheet.applyWidth(
+                { alignItems: 'center', justifyContent: 'center' },
+                dimensions.width
+              )}
+            >
+              <View
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
-                    opacity: 0.85,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    gap: 12,
+                    width: '100%',
                   },
                   dimensions.width
                 )}
               >
-                {'Address'}
-              </Text>
-              {/* addressInput */}
-              <TextInput
-                autoCorrect={true}
-                changeTextDelay={500}
-                multiline={true}
-                numberOfLines={4}
-                onChangeText={newAddressInputValue => {
-                  try {
-                    setAddressInputV1(newAddressInputValue);
-                  } catch (err) {
-                    console.error(err);
-                  }
-                }}
-                textAlignVertical={'top'}
-                webShowOutline={true}
-                maxLength={75}
-                placeholder={'Enter address to parking'}
-                placeholderTextColor={theme.colors.text.light}
-                style={StyleSheet.applyWidth(
-                  {
-                    backgroundColor: palettes.App['Custom Color'],
-                    borderBottomWidth: 1,
-                    borderColor: theme.colors.text.light,
-                    borderLeftWidth: 1,
-                    borderRadius: 12,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
-                    color: palettes.Brand['Secondary Text'],
-                    fontFamily: 'Inter_300Light',
-                    height: 48,
-                    marginTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 20,
-                    paddingRight: 20,
-                    paddingTop: 12,
-                  },
-                  dimensions.width
+                {/* Label */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 16,
+                      opacity: 0.85,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {'Meetup Location *'}
+                </Text>
+                {/* Location Display */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 10,
+                      opacity: 0.85,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {Constants['meetupLat']}
+                  {'    '}
+                  {Constants['meetupLon']}
+                </Text>
+              </View>
+              {/* Select Meetup Location */}
+              <>
+                {Constants['loading'] ? null : (
+                  <Button
+                    iconPosition={'left'}
+                    onPress={() => {
+                      try {
+                        setGlobalVariableValue({
+                          key: 'loading',
+                          value: true,
+                        });
+                        navigation.navigate('PickAMeetupLocationScreen');
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    disabled={undefined ? undefined : undefined}
+                    style={StyleSheet.applyWidth(
+                      {
+                        backgroundColor:
+                          palettes['Trail Twin'][
+                            'Secondary Green #2 - Trail Twin'
+                          ],
+                        borderRadius: 8,
+                        fontFamily: 'Inter_500Medium',
+                        fontSize: 14,
+                        height: 5,
+                        marginTop: 12,
+                        textAlign: 'center',
+                        width: '100%',
+                      },
+                      dimensions.width
+                    )}
+                    title={'Select Meetup Location'}
+                  />
                 )}
-                value={addressInputV1}
-              />
+              </>
+              <>
+                {!Constants['loading'] ? null : (
+                  <LoadingIndicator
+                    size={30}
+                    color={palettes.Brand['Secondary Grey']}
+                    type={'flow'}
+                  />
+                )}
+              </>
             </View>
             {/* Ride Description */}
             <View>
               {/* title */}
               <Text
                 accessible={true}
+                selectable={false}
                 style={StyleSheet.applyWidth(
                   {
                     color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 16,
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Ride Description\n'}
+                {'Event Description *\n'}
               </Text>
               {/* descriptionInput */}
               <TextInput
@@ -635,7 +521,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                 numberOfLines={4}
                 onChangeText={newDescriptionInputValue => {
                   try {
-                    setDescriptionInputV1(newDescriptionInputValue);
+                    setDescriptionInput(newDescriptionInputValue);
                   } catch (err) {
                     console.error(err);
                   }
@@ -643,11 +529,12 @@ line two` ) and will not work with special characters inside of quotes ( example
                 textAlignVertical={'top'}
                 webShowOutline={true}
                 maxLength={300}
-                placeholder={'Describe the plan of the ride'}
+                placeholder={'Describe the plan for the event'}
                 placeholderTextColor={theme.colors.text.light}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: palettes.App['Custom Color'],
+                    backgroundColor:
+                      palettes['Trail Twin']['White - Trail Twin'],
                     borderBottomWidth: 1,
                     borderColor: theme.colors.text.light,
                     borderLeftWidth: 1,
@@ -657,7 +544,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                     color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
                     height: 96,
-                    marginTop: 8,
+                    marginTop: 12,
                     paddingBottom: 8,
                     paddingLeft: 20,
                     paddingRight: 20,
@@ -665,7 +552,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                   },
                   dimensions.width
                 )}
-                value={descriptionInputV1}
+                value={descriptionInput}
               />
             </View>
             {/* Date */}
@@ -673,115 +560,329 @@ line two` ) and will not work with special characters inside of quotes ( example
               {/* Label */}
               <Text
                 accessible={true}
+                selectable={false}
                 style={StyleSheet.applyWidth(
                   {
                     color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
-                    fontSize: 14,
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 16,
                     opacity: 0.85,
                   },
                   dimensions.width
                 )}
               >
-                {'Date'}
+                {'Date *'}
               </Text>
-              {/* dateInput 2 */}
-              <TextInput
-                autoCorrect={true}
-                changeTextDelay={500}
-                multiline={true}
-                onChangeText={newDateInput2Value => {
+              {/* dateInput */}
+              <DatePicker
+                autoDismissKeyboard={true}
+                disabled={false}
+                hideLabel={false}
+                leftIconMode={'inset'}
+                mode={'date'}
+                onDateChange={newDateInputValue => {
+                  console.log('dateInput ON_DATE_CHANGE Start');
+                  let error = null;
                   try {
-                    setDateInputV1(newDateInput2Value);
+                    console.log('Start ON_DATE_CHANGE:0 SET_VARIABLE');
+                    setDateInput(newDateInputValue);
+                    console.log('Complete ON_DATE_CHANGE:0 SET_VARIABLE');
                   } catch (err) {
                     console.error(err);
+                    error = err.message ?? err;
                   }
+                  console.log(
+                    'dateInput ON_DATE_CHANGE Complete',
+                    error ? { error } : 'no error'
+                  );
                 }}
-                textAlignVertical={'top'}
-                webShowOutline={true}
-                maxLength={8}
-                numberOfLines={1}
-                placeholder={'mm/dd/yy'}
-                placeholderTextColor={theme.colors.text.light}
+                date={dateInput}
+                format={'mm/dd/yyyy'}
+                label={'Enter date'}
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: palettes.App['Custom Color'],
-                    borderBottomWidth: 1,
+                    backgroundColor:
+                      palettes['Trail Twin']['White - Trail Twin'],
                     borderColor: theme.colors.text.light,
-                    borderLeftWidth: 1,
                     borderRadius: 12,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
                     color: palettes.Brand['Secondary Text'],
                     fontFamily: 'Inter_300Light',
-                    height: 48,
-                    marginTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 20,
-                    paddingRight: 20,
-                    paddingTop: 12,
+                    marginTop: 12,
+                    paddingLeft: 5,
+                    paddingRight: 5,
                   },
                   dimensions.width
                 )}
-                value={dateInputV1}
+                type={'solid'}
               />
             </View>
-            {/* Start Time */}
+            {/* Start time */}
             <View>
-              {/* Label */}
-              <Text
-                accessible={true}
+              <View
                 style={StyleSheet.applyWidth(
                   {
-                    color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
-                    opacity: 0.85,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
                   },
                   dimensions.width
                 )}
               >
-                {'Start time'}
-              </Text>
-              {/* startTimeInput 2 */}
-              <TextInput
-                autoCorrect={true}
-                changeTextDelay={500}
-                multiline={true}
-                onChangeText={newStartTimeInput2Value => {
+                {/* Start Time */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 16,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {'Start Time *'}
+                </Text>
+                {/* Time */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 14,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {formatHours(startTimeInput)}{' '}
+                  {formatAmPm(ampm, startTimeInput)}
+                </Text>
+              </View>
+              <Slider
+                onValueChange={newSliderValue => {
                   try {
-                    setStartTimeInputV1(newStartTimeInput2Value);
+                    setStartTimeInput(newSliderValue);
                   } catch (err) {
                     console.error(err);
                   }
                 }}
-                textAlignVertical={'top'}
-                webShowOutline={true}
-                maxLength={7}
-                numberOfLines={1}
-                placeholder={'HH:MMam/pm'}
-                placeholderTextColor={theme.colors.text.light}
+                maximumTrackTintColor={palettes.Brand['Secondary Grey']}
+                maximumValue={23 ?? 60}
+                minimumTrackTintColor={palettes.Brand['Secondary Grey']}
+                minimumValue={0 ?? 1}
+                thumbTintColor={
+                  palettes['Trail Twin']['Primary Green - Trail Twin']
+                }
+                value={startTimeInput}
+              />
+            </View>
+            {/* Estimated Length of Ride */}
+            <View>
+              <View
                 style={StyleSheet.applyWidth(
                   {
-                    backgroundColor: palettes.App['Custom Color'],
-                    borderBottomWidth: 1,
-                    borderColor: theme.colors.text.light,
-                    borderLeftWidth: 1,
-                    borderRadius: 12,
-                    borderRightWidth: 1,
-                    borderTopWidth: 1,
-                    color: palettes.Brand['Secondary Text'],
-                    fontFamily: 'Inter_300Light',
-                    height: 48,
-                    marginTop: 8,
-                    paddingBottom: 8,
-                    paddingLeft: 20,
-                    paddingRight: 20,
-                    paddingTop: 12,
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
                   },
                   dimensions.width
                 )}
-                value={startTimeInputV1}
+              >
+                {/* Time */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 16,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {'Estimated Length of Ride *'}
+                </Text>
+                {/* Time */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 14,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {formatRideLength(rideTimeLengthInput)}
+                </Text>
+              </View>
+              <Slider
+                onValueChange={newSliderValue => {
+                  try {
+                    setRideTimeLengthInput(newSliderValue);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                maximumTrackTintColor={palettes.Brand['Secondary Grey']}
+                maximumValue={12 ?? 60}
+                minimumTrackTintColor={palettes.Brand['Secondary Grey']}
+                minimumValue={0 ?? 1}
+                thumbTintColor={
+                  palettes['Trail Twin']['Primary Green - Trail Twin']
+                }
+                value={rideTimeLengthInput}
               />
+            </View>
+            {/* Max Party Size */}
+            <View>
+              <View
+                style={StyleSheet.applyWidth(
+                  {
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                  },
+                  dimensions.width
+                )}
+              >
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 16,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {'Max Party Size *'}
+                </Text>
+
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 14,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {maxPartySizeInput}
+                  {' Riders'}
+                </Text>
+              </View>
+              <Slider
+                onValueChange={newSliderValue => {
+                  try {
+                    setMaxPartySizeInput(newSliderValue);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
+                maximumTrackTintColor={palettes.Brand['Secondary Grey']}
+                maximumValue={50 ?? 60}
+                minimumTrackTintColor={
+                  palettes['Trail Twin']['Primary Green - Trail Twin']
+                }
+                minimumValue={0 ?? 1}
+                thumbTintColor={
+                  palettes['Trail Twin']['Primary Green - Trail Twin']
+                }
+                value={maxPartySizeInput}
+              />
+            </View>
+            {/* Event Type */}
+            <View
+              style={StyleSheet.applyWidth(
+                {
+                  alignItems: 'stretch',
+                  flex: 1,
+                  justifyContent: 'space-evenly',
+                },
+                dimensions.width
+              )}
+            >
+              {/* Skill Level */}
+              <View
+                style={StyleSheet.applyWidth(
+                  { position: 'relative' },
+                  dimensions.width
+                )}
+              >
+                {/* Label */}
+                <Text
+                  accessible={true}
+                  selectable={false}
+                  style={StyleSheet.applyWidth(
+                    {
+                      color: theme.colors.text.strong,
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 16,
+                      marginBottom: 12,
+                      opacity: 0.85,
+                    },
+                    dimensions.width
+                  )}
+                >
+                  {'Ride Type *'}
+                </Text>
+                <Picker
+                  autoDismissKeyboard={true}
+                  dropDownBorderColor={theme.colors.border.brand}
+                  dropDownBorderRadius={8}
+                  dropDownBorderWidth={1}
+                  dropDownTextColor={theme.colors.text.strong}
+                  iconSize={24}
+                  leftIconMode={'inset'}
+                  mode={'native'}
+                  onValueChange={newPickerValue => {
+                    try {
+                      setEventTypeInput(newPickerValue);
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  }}
+                  placeholder={'Select an option'}
+                  selectedIconColor={theme.colors.text.strong}
+                  selectedIconName={'Feather/check'}
+                  selectedIconSize={20}
+                  type={'solid'}
+                  dropDownBackgroundColor={
+                    palettes['Trail Twin']['White - Trail Twin']
+                  }
+                  options={[
+                    { label: 'Group Ride', value: 'Group Ride' },
+                    { label: 'Trail Work', value: 'Trail Work' },
+                    { label: 'Race', value: 'Race' },
+                    { label: 'Bike Trip', value: 'Bike Trip' },
+                    { label: 'Other', value: 'Other' },
+                  ]}
+                  style={StyleSheet.applyWidth(
+                    {
+                      backgroundColor:
+                        palettes['Trail Twin']['White - Trail Twin'],
+                      fontFamily: 'Inter_300Light',
+                      textTransform: 'lowercase',
+                    },
+                    dimensions.width
+                  )}
+                  value={eventTypeInput}
+                />
+              </View>
             </View>
             {/* Tags View */}
             <View
@@ -790,7 +891,7 @@ line two` ) and will not work with special characters inside of quotes ( example
                   alignItems: 'stretch',
                   flex: 1,
                   justifyContent: 'space-evenly',
-                  zIndex: 2,
+                  zIndex: -1,
                 },
                 dimensions.width
               )}
@@ -805,20 +906,21 @@ line two` ) and will not work with special characters inside of quotes ( example
                 {/* Label */}
                 <Text
                   accessible={true}
+                  selectable={false}
                   style={StyleSheet.applyWidth(
                     {
                       color: theme.colors.text.strong,
-                      fontFamily: 'Inter_300Light',
+                      fontFamily: 'Inter_400Regular',
+                      fontSize: 16,
                       opacity: 0.85,
                     },
                     dimensions.width
                   )}
                 >
-                  {'Tags (Optional)'}
+                  {'Tags *'}
                 </Text>
                 <MultiSelectPicker
                   autoDismissKeyboard={true}
-                  dropDownBackgroundColor={theme.colors.background.brand}
                   dropDownBorderColor={theme.colors.border.brand}
                   dropDownBorderRadius={8}
                   dropDownBorderWidth={1}
@@ -826,241 +928,270 @@ line two` ) and will not work with special characters inside of quotes ( example
                   iconSize={24}
                   leftIconMode={'inset'}
                   onValueChange={newMultiSelectPickerValue => {
-                    const pickerValue = newMultiSelectPickerValue;
                     try {
-                      setMultiSelectPickerValue2(newMultiSelectPickerValue);
+                      setTagsInput(newMultiSelectPickerValue);
                     } catch (err) {
                       console.error(err);
                     }
                   }}
-                  placeholder={'Select an option'}
                   selectedIconColor={theme.colors.text.strong}
                   selectedIconName={'Feather/check'}
                   selectedIconSize={20}
                   type={'solid'}
+                  dropDownBackgroundColor={
+                    palettes['Trail Twin']['White - Trail Twin']
+                  }
                   options={[
-                    { label: 'Dig party', value: 'Dig party' },
-                    { label: 'Group ride', value: 'Group ride' },
-                    { label: 'Race', value: 'Race' },
                     { label: 'Jump session', value: 'Jump session' },
                     { label: 'Dirt Jumping', value: 'Dirt Jumping' },
                     { label: 'Enduro', value: 'Enduro' },
                     { label: 'Freeride', value: 'Freeride' },
-                    { label: 'Beginner ', value: 'Beginner' },
-                    { label: 'Intermediate', value: 'Intermediate' },
-                    { label: 'Advanced', value: 'Advanced' },
+                    { label: 'Flow Trails', value: 'Flow Trails' },
+                    { label: 'Tech Trails', value: 'Tech Trails' },
+                    { label: 'Private Trails', value: 'Private Trails' },
+                    { label: 'Bmx', value: 'Bmx' },
+                    { label: 'E-Bikes', value: 'E-Bikes' },
+                    { label: 'Hard Tails', value: 'Hard Tails' },
+                    { label: 'Full Suspensions', value: 'Full Suspensions' },
+                    { label: 'Beginner Friendly', value: 'Beginner Friendly' },
+                    { label: 'Training Ride', value: 'Training Ride' },
+                    { label: 'Coaching', value: 'Coaching' },
+                    { label: 'No Coaching', value: 'No Coaching' },
+                    { label: 'Scenic Ride', value: 'Scenic Ride' },
+                    { label: 'Slow Climb', value: 'Slow Climb' },
+                    { label: 'Fast Climb', value: 'Fast Climb' },
+                    { label: 'Fitness Ride', value: 'Fitness Ride' },
+                    { label: 'First Aid Trained', value: 'First Aid Trained' },
+                    { label: 'Shuttle Service', value: 'Shuttle Service' },
+                    { label: 'Carpooling', value: 'Carpooling' },
+                    { label: 'Bike Park', value: 'Bike Park' },
+                    { label: 'Mixed Gender', value: 'Mixed Gender' },
+                    { label: 'Females', value: 'Females' },
+                    { label: 'Males', value: 'Males' },
+                    { label: 'LGBTQ+', value: 'LGTBQ+' },
+                    { label: 'Volunteer Work', value: 'Volunteer Work' },
+                    { label: 'Paid Work', value: 'Paid Work' },
+                    {
+                      label: 'Authorized Trail Work',
+                      value: 'Authorized Trail Work',
+                    },
+                    { label: 'Trail Sculpting', value: 'Trail Sculpting' },
+                    { label: 'Trail Digging', value: 'Trail Digging' },
+                    { label: 'Trail Maintenance', value: 'Trail Maintenance' },
+                    { label: 'Tools Provied', value: 'Tools Provided' },
+                    {
+                      label: 'Tools Not Provided',
+                      value: 'Tools Not Provided',
+                    },
+                    { label: 'Waiver Required', value: 'Waiver Required' },
+                    { label: 'Ages 18-25', value: 'Ages 18-25' },
+                    { label: 'Ages 26-30', value: 'Ages 26-30' },
+                    { label: 'Ages 30-40', value: 'Ages 30-40' },
+                    { label: 'Ages 40-50', value: 'Ages 40-50' },
+                    { label: 'Ages 50+', value: 'Ages 50+' },
                   ]}
+                  placeholder={'Select options'}
                   rightIconName={'AntDesign/down'}
                   style={StyleSheet.applyWidth(
                     {
                       backgroundColor: palettes.Brand.Surface,
                       color: palettes.Brand['Secondary Text'],
                       fontFamily: 'Inter_300Light',
+                      marginTop: 12,
                       position: 'relative',
                     },
                     dimensions.width
                   )}
-                  value={multiSelectPickerValue2}
+                  value={tagsInput}
                 />
               </View>
             </View>
-            {/* Personal Photo */}
-            <View>
-              <Text
-                accessible={true}
-                style={StyleSheet.applyWidth(
-                  {
-                    color: theme.colors.text.strong,
-                    fontFamily: 'Inter_300Light',
-                  },
-                  dimensions.width
-                )}
-              >
-                {'Profile Photo'}
-              </Text>
-
-              <Touchable
-                onPress={() => {
-                  const handler = async () => {
-                    try {
-                      const safetySelfie = await openImagePickerUtil({
-                        mediaTypes: 'Images',
-                        allowsEditing: false,
-                        quality: 0.5,
-                        allowsMultipleSelection: false,
-                        permissionErrorMessage:
-                          'Sorry, we need media library permissions to make this work.',
-                        showAlertOnPermissionError: true,
-                      });
-
-                      if (safetySelfie) {
-                        console.log('Image was captured'.toString());
-                        setIsSafetySelfie(true);
-                        console.log('isSafetySelfie is set to True');
-                        setSafetySelfie(safetySelfie);
-                      } else {
-                        console.log('Upload Cancelled');
-                      }
-
-                      console.log('End of upload action workflow');
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  };
-                  handler();
-                }}
-                style={StyleSheet.applyWidth(
-                  { marginTop: 10 },
-                  dimensions.width
-                )}
-              >
-                {/* Uploaded Selfie */}
+            {/* Ride Skill Level */}
+            <>
+              {!checkForGroupRide(eventTypeInput) ? null : (
                 <View
                   style={StyleSheet.applyWidth(
                     {
-                      alignContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: palettes.App['Custom Color'],
-                      borderBottomWidth: 1,
-                      borderColor: theme.colors.text.light,
-                      borderLeftWidth: 1,
-                      borderRadius: 12,
-                      borderRightWidth: 1,
-                      borderStyle: 'dashed',
-                      borderTopWidth: 1,
-                      height: 140,
-                      justifyContent: 'center',
+                      alignItems: 'stretch',
+                      flex: 1,
+                      justifyContent: 'space-evenly',
+                      zIndex: -2,
                     },
                     dimensions.width
                   )}
                 >
-                  {/* hostProfilePhoto */}
-                  <>
-                    {!safetySelfie ? null : (
-                      <Image
-                        resizeMode={'cover'}
-                        {...GlobalStyles.ImageStyles(theme)['Image'].props}
-                        source={{ uri: `${safetySelfie}` }}
-                        style={StyleSheet.applyWidth(
-                          GlobalStyles.ImageStyles(theme)['Image'].style,
-                          dimensions.width
-                        )}
-                      />
+                  {/* Skill Level */}
+                  <View
+                    style={StyleSheet.applyWidth(
+                      { position: 'relative' },
+                      dimensions.width
                     )}
-                  </>
-                  <>
-                    {isSafetySelfie ? null : (
-                      <Text
-                        accessible={true}
-                        {...GlobalStyles.TextStyles(theme)['Text'].props}
-                        style={StyleSheet.applyWidth(
-                          StyleSheet.compose(
-                            GlobalStyles.TextStyles(theme)['Text'].style,
-                            {
-                              color: palettes.Brand['Secondary Text'],
-                              fontFamily: 'Inter_300Light',
-                              marginBottom: 8,
-                              textAlign: 'center',
-                            }
-                          ),
-                          dimensions.width
-                        )}
-                      >
-                        {'Upload a profile photo'}
-                      </Text>
-                    )}
-                  </>
-                  <>
-                    {isSafetySelfie ? null : (
-                      <Icon
-                        color={palettes.App['Custom Color_38']}
-                        name={'AntDesign/camerao'}
-                        size={35}
-                      />
-                    )}
-                  </>
+                  >
+                    {/* Label */}
+                    <Text
+                      accessible={true}
+                      selectable={false}
+                      style={StyleSheet.applyWidth(
+                        {
+                          color: theme.colors.text.strong,
+                          fontFamily: 'Inter_400Regular',
+                          fontSize: 16,
+                          marginBottom: 12,
+                          opacity: 0.85,
+                        },
+                        dimensions.width
+                      )}
+                    >
+                      {'Skill Level'}
+                    </Text>
+                    <MultiSelectPicker
+                      autoDismissKeyboard={true}
+                      dropDownBorderColor={theme.colors.border.brand}
+                      dropDownBorderRadius={8}
+                      dropDownBorderWidth={1}
+                      dropDownTextColor={theme.colors.text.strong}
+                      iconSize={24}
+                      leftIconMode={'inset'}
+                      onValueChange={newMultiSelectPickerValue => {
+                        try {
+                          setSkillLevelInput(newMultiSelectPickerValue);
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                      selectedIconColor={theme.colors.text.strong}
+                      selectedIconName={'Feather/check'}
+                      selectedIconSize={20}
+                      type={'solid'}
+                      dropDownBackgroundColor={
+                        palettes['Trail Twin']['White - Trail Twin']
+                      }
+                      options={[
+                        { label: 'Any Skill Level', value: 'Any Skill Level' },
+                        { label: 'Beginner', value: 'Beginner' },
+                        { label: 'Intermediate', value: 'Intermediate' },
+                        { label: 'Advanced', value: 'Advanced' },
+                        { label: 'Pro', value: 'Pro' },
+                      ]}
+                      placeholder={'Select options'}
+                      rightIconName={'AntDesign/down'}
+                      style={StyleSheet.applyWidth(
+                        {
+                          backgroundColor:
+                            palettes['Trail Twin']['White - Trail Twin'],
+                          color: palettes.Brand['Secondary Text'],
+                          fontFamily: 'Inter_300Light',
+                          position: 'relative',
+                        },
+                        dimensions.width
+                      )}
+                      value={skillLevelInput}
+                    />
+                  </View>
                 </View>
-              </Touchable>
-            </View>
+              )}
+            </>
             {/* Confirm Button View */}
             <View
               style={StyleSheet.applyWidth(
-                { marginTop: 24, zIndex: 1 },
+                {
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 256,
+                  zIndex: -3,
+                },
                 dimensions.width
               )}
             >
               {/* Create Event Button */}
-              <Button
-                iconPosition={'left'}
-                onPress={() => {
-                  const handler = async () => {
-                    try {
-                      const maxedDailyEvents = await (async () => {
-                        if (hostNameInputV1) {
-                          return await checkEventLimit();
-                        }
-                      })();
-                      if (maxedDailyEvents) {
-                        showAlertUtil({
-                          title: 'Failed',
-                          message: 'Maximun Rides Created Today',
-                          buttonText: 'Ok',
-                        });
-                      } else {
-                        const generatedimageName = generateImageName();
-                        const convertedImageDbUrl =
-                          convertImageNameToDbPath(generatedimageName);
-                        const res = (
-                          await supabaseEventsCreateEventPOST.mutateAsync({
-                            addressInputV1: addressInputV1,
-                            dateInputV1: dateInputV1,
-                            descriptionInputV1: descriptionInputV1,
-                            hostAgeInputV1: hostAgeInputV1,
-                            hostNameInputV1: hostNameInputV1,
-                            imageDbUrl: convertedImageDbUrl,
-                            invitesInputV1: invitesInputIntV1,
-                            partySizeInputV1: partySizeInputV1,
-                            rideNameInput: rideNameInput,
-                            startTimeInputV1: startTimeInputV1,
-                            tagsInputV1: multiSelectPickerValue2,
-                            trailNameInputV1: trailNameInputV1,
-                          })
-                        )?.json;
-                        console.log(res);
-                        await uploadSelfieToBucket(
-                          safetySelfie,
-                          generatedimageName
-                        );
-                        navigation.navigate('BottomTabNavigator', {
-                          screen: 'ExploreEventsScreen',
-                        });
+              <>
+                {Constants['loading'] ? null : (
+                  <Button
+                    iconPosition={'left'}
+                    onPress={() => {
+                      const handler = async () => {
+                        try {
+                          setGlobalVariableValue({
+                            key: 'loading',
+                            value: true,
+                          });
+                          const createdEvent = (
+                            await supabaseEventsCreateEventPOST.mutateAsync({
+                              dateInput: dateInput,
+                              descriptionInput: descriptionInput,
+                              eventTypeInput: eventTypeInput,
+                              maxPartySizeInput: maxPartySizeInput,
+                              meetupLat: Constants['meetupLat'],
+                              meetupLon: Constants['meetupLon'],
+                              rideLength: rideTimeLengthInput,
+                              rideNameInput: rideNameInput,
+                              skillLevelInput: skillLevelInput,
+                              startTimeInput: startTimeInput,
+                              tagsInput: tagsInput,
+                              trailNameInput: trailNameInput,
+                              user_id: Constants['user_id'],
+                            })
+                          )?.json;
+                          posthogEventCapture(
+                            'Created Biking Event',
+                            'New biking event created'
+                          );
+                          console.log(
+                            createdEvent[createdEvent.length - 1]?.id
+                          );
 
-                        showAlertUtil({
-                          title: 'Success',
-                          message: 'You successfully created a ride!',
-                          buttonText: 'Ok',
-                        });
-                      }
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  };
-                  handler();
-                }}
-                style={StyleSheet.applyWidth(
-                  {
-                    backgroundColor: palettes.App['Custom Color_38'],
-                    borderRadius: 12,
-                    color: palettes.App['Custom Color'],
-                    fontFamily: 'Inter_500Medium',
-                    fontSize: 16,
-                    height: 52,
-                    textAlign: 'center',
-                  },
-                  dimensions.width
+                          showAlertUtil({
+                            title: 'Success',
+                            message: 'You successfully created a ride!',
+                            buttonText: 'Ok',
+                          });
+
+                          setGlobalVariableValue({
+                            key: 'meetupLat',
+                            value: null,
+                          });
+                          setGlobalVariableValue({
+                            key: 'meetupLon',
+                            value: null,
+                          });
+                          navigation.navigate('EventDetailsScreen', {
+                            event_id: createdEvent[createdEvent.length - 1]?.id,
+                          });
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      };
+                      handler();
+                    }}
+                    disabled={undefined ? undefined : undefined}
+                    style={StyleSheet.applyWidth(
+                      {
+                        backgroundColor:
+                          palettes['Trail Twin'][
+                            'Secondary Green #2 - Trail Twin'
+                          ],
+                        borderRadius: 8,
+                        fontFamily: 'Inter_500Medium',
+                        fontSize: 14,
+                        height: 5,
+                        textAlign: 'center',
+                        width: '100%',
+                      },
+                      dimensions.width
+                    )}
+                    title={'Confirm '}
+                  />
                 )}
-                title={'Confirm '}
-              />
+              </>
+              <>
+                {!Constants['loading'] ? null : (
+                  <LoadingIndicator
+                    size={30}
+                    color={palettes.Brand['Secondary Grey']}
+                    type={'flow'}
+                  />
+                )}
+              </>
             </View>
           </View>
         </SimpleStyleScrollView>

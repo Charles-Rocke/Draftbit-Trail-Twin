@@ -1,14 +1,4 @@
 import React from 'react';
-import * as GlobalStyles from '../GlobalStyles.js';
-import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
-import EventDetailsCardBlock from '../components/EventDetailsCardBlock';
-import RiderProfileDisplayBlock from '../components/RiderProfileDisplayBlock';
-import * as GlobalVariables from '../config/GlobalVariableContext';
-import palettes from '../themes/palettes';
-import Breakpoints from '../utils/Breakpoints';
-import * as StyleSheet from '../utils/StyleSheet';
-import openShareUtil from '../utils/openShare';
-import useWindowDimensions from '../utils/useWindowDimensions';
 import {
   ScreenContainer,
   SimpleStyleScrollView,
@@ -16,36 +6,43 @@ import {
 } from '@draftbit/ui';
 import { useIsFocused } from '@react-navigation/native';
 import { Text, View } from 'react-native';
+import * as GlobalStyles from '../GlobalStyles.js';
+import AttendeesDisplayBlock from '../components/AttendeesDisplayBlock';
+import EventDetailsCardBlock from '../components/EventDetailsCardBlock';
+import * as GlobalVariables from '../config/GlobalVariableContext';
+import palettes from '../themes/palettes';
+import Breakpoints from '../utils/Breakpoints';
+import * as StyleSheet from '../utils/StyleSheet';
+import openShareUtil from '../utils/openShare';
+import useWindowDimensions from '../utils/useWindowDimensions';
+
+const defaultProps = { event_id: 126 };
 
 const EventDetailsScreen = props => {
   const { theme, navigation } = props;
   const dimensions = useWindowDimensions();
   const Constants = GlobalVariables.useValues();
   const Variables = Constants;
+  const setGlobalVariableValue = GlobalVariables.useSetValue();
   const isFocused = useIsFocused();
   React.useEffect(() => {
-    const handler = async () => {
-      try {
-        if (!isFocused) {
-          return;
-        }
-        (
-          await SupabaseEventsApi.getAttendeesByEventIdGET(Constants, {
-            eventId: props.route?.params?.event_id ?? 121,
-            select: '*',
-          })
-        )?.json;
-      } catch (err) {
-        console.error(err);
+    try {
+      if (!isFocused) {
+        return;
       }
-    };
-    handler();
+      setGlobalVariableValue({
+        key: 'loading',
+        value: false,
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }, [isFocused]);
 
   return (
     <ScreenContainer
-      hasSafeArea={false}
       scrollable={false}
+      hasSafeArea={false}
       hasTopSafeArea={false}
       style={StyleSheet.applyWidth(
         { backgroundColor: '"rgb(253, 253, 245)"' },
@@ -65,7 +62,7 @@ const EventDetailsScreen = props => {
         )}
       >
         <EventDetailsCardBlock
-          event_id={props.route?.params?.event_id ?? 121}
+          event_id={props.route?.params?.event_id ?? defaultProps.event_id}
         />
         {/* Riders Attending View */}
         <View
@@ -82,21 +79,20 @@ const EventDetailsScreen = props => {
         >
           <Text
             accessible={true}
+            selectable={false}
             {...GlobalStyles.TextStyles(theme)['Text'].props}
             style={StyleSheet.applyWidth(
               StyleSheet.compose(GlobalStyles.TextStyles(theme)['Text'].style, {
-                fontFamily: 'Inter_400Regular',
+                fontFamily: 'Inter_500Medium',
                 fontSize: 18,
                 marginBottom: 24,
               }),
               dimensions.width
             )}
           >
-            {'Other Riders Attending'}
+            {'Riders Attending'}
           </Text>
-          <RiderProfileDisplayBlock
-            event_id={props.route?.params?.event_id ?? 121}
-          />
+          <AttendeesDisplayBlock />
         </View>
       </SimpleStyleScrollView>
     </ScreenContainer>

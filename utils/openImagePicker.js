@@ -9,6 +9,7 @@ async function openImagePicker({
   allowsMultipleSelection = false,
   showAlertOnPermissionError = true,
   permissionErrorMessage = 'Sorry, we need media library permissions to make this work.',
+  outputBase64 = true,
 }) {
   if (Platform.OS !== 'web') {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -42,9 +43,11 @@ async function openImagePicker({
   }
 
   if (allowsMultipleSelection) {
-    return await Promise.all(assets.map(asset => assetToBase64(asset)));
+    return outputBase64
+      ? Promise.all(assets.map(asset => assetToBase64(asset)))
+      : assets;
   } else {
-    return await assetToBase64(assets[0]);
+    return outputBase64 ? await assetToBase64(assets[0]) : assets[0];
   }
 }
 

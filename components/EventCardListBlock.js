@@ -1,31 +1,34 @@
 import React from 'react';
-import * as GlobalStyles from '../GlobalStyles.js';
-import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
-import * as GlobalVariables from '../config/GlobalVariableContext';
-import Images from '../config/Images';
-import deleteEvent from '../global-functions/deleteEvent';
-import formatDate from '../global-functions/formatDate';
-import formatTotalRiders from '../global-functions/formatTotalRiders';
-import isPastEvent from '../global-functions/isPastEvent';
-import palettes from '../themes/palettes';
-import Breakpoints from '../utils/Breakpoints';
-import * as StyleSheet from '../utils/StyleSheet';
-import useWindowDimensions from '../utils/useWindowDimensions';
 import {
   Button,
+  Icon,
+  LoadingIndicator,
   SimpleStyleFlatList,
   Touchable,
   withTheme,
 } from '@draftbit/ui';
 import { useIsFocused, useNavigation } from '@react-navigation/native';
-import {
-  ActivityIndicator,
-  Image,
-  RefreshControl,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Image, Text, View } from 'react-native';
 import { Fetch } from 'react-request';
+import * as GlobalStyles from '../GlobalStyles.js';
+import * as EventPhotosApi from '../apis/EventPhotosApi.js';
+import * as SupabaseEventsApi from '../apis/SupabaseEventsApi.js';
+import * as GlobalVariables from '../config/GlobalVariableContext';
+import Images from '../config/Images';
+import FilterUpcomingAndTodaysEvents from '../global-functions/FilterUpcomingAndTodaysEvents';
+import createEventStatus from '../global-functions/createEventStatus';
+import filterEvents from '../global-functions/filterEvents';
+import formatAmPm from '../global-functions/formatAmPm';
+import formatDate from '../global-functions/formatDate';
+import formatHours from '../global-functions/formatHours';
+import formatJSON from '../global-functions/formatJSON';
+import sortEvents from '../global-functions/sortEvents';
+import palettes from '../themes/palettes';
+import Breakpoints from '../utils/Breakpoints';
+import * as StyleSheet from '../utils/StyleSheet';
+import imageSource from '../utils/imageSource';
+import useWindowDimensions from '../utils/useWindowDimensions';
+import waitUtil from '../utils/wait';
 
 const EventCardListBlock = props => {
   const { theme } = props;
@@ -34,7 +37,12 @@ const EventCardListBlock = props => {
   const Constants = GlobalVariables.useValues();
   const Variables = Constants;
   const setGlobalVariableValue = GlobalVariables.useSetValue();
-  const [refreshingxT0hVDb1, setRefreshingxT0hVDb1] = React.useState(false);
+  const [ampm, setAmpm] = React.useState('');
+  const [weather, setWeather] = React.useState([]);
+  const reverseArray = data => {
+    return data.reverse();
+  };
+
   // Filters events based on the search query
   const filterEvents = (Variables, setGlobalVariableValue, data) => {
     // Function to filter and sort data based on input term
@@ -65,6 +73,19 @@ const EventCardListBlock = props => {
 
     return filteredData;
   };
+  const supabaseEventsUpdateEventStatusPATCH =
+    SupabaseEventsApi.useUpdateEventStatusPATCH();
+  React.useEffect(() => {
+    const handler = async () => {
+      try {
+        (await SupabaseEventsApi.getEventsGET(Constants, { select: '*' }))
+          ?.json;
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    handler();
+  }, []);
 
   return (
     <SupabaseEventsApi.FetchGetEventsGET
@@ -72,11 +93,24 @@ const EventCardListBlock = props => {
         onData: fetchData => {
           const handler = async () => {
             try {
-              const isPastEvent = isPastEvent(fetchData?.date);
-              if (isPastEvent) {
-                await deleteEvent(undefined);
-              } else {
-              }
+              const events = (
+                await SupabaseEventsApi.getEventsGET(Constants, { select: '*' })
+              )?.json;
+              setGlobalVariableValue({
+                key: 'filteredEvents',
+                value: filterEvents(
+                  events,
+                  Constants['eventTypeFilter'],
+                  Constants['tagsFilter'],
+                  Constants['rideNameFilter'],
+                  Constants['trailFilter'],
+                  Constants['skillLevelFilter'],
+                  Constants['minDateFilter'],
+                  Constants['maxDateFilter'],
+                  undefined,
+                  undefined
+                ),
+              });
             } catch (err) {
               console.error(err);
             }
@@ -98,188 +132,194 @@ const EventCardListBlock = props => {
 
         return (
           <SimpleStyleFlatList
-            data={fetchData}
+            data={sortEvents(FilterUpcomingAndTodaysEvents(fetchData))}
             horizontal={false}
             keyExtractor={(listData, index) =>
-              listData?.id ?? listData?.uuid ?? index.toString()
+              listData?.id ??
+              listData?.uuid ??
+              index?.toString() ??
+              JSON.stringify(listData)
             }
             keyboardShouldPersistTaps={'never'}
             listKey={'xT0hVDb1'}
             nestedScrollEnabled={false}
             numColumns={1}
             onEndReachedThreshold={0.5}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshingxT0hVDb1}
-                onRefresh={() => {
-                  try {
-                    setRefreshingxT0hVDb1(true);
-                    if (new Date() ? undefined : undefined) {
-                      isPastEvent(undefined);
-                    }
-                    /* 'Run a Custom Function' action requires configuration: choose a custom function */ setRefreshingxT0hVDb1(
-                      false
-                    );
-                  } catch (err) {
-                    console.error(err);
-                    setRefreshingxT0hVDb1(false);
-                  }
-                }}
-              />
-            }
             renderItem={({ item, index }) => {
               const listData = item;
               return (
                 <View
+                  onLayout={event => {
+                    const handler = async () => {
+                      try {
+                        (
+                          await supabaseEventsUpdateEventStatusPATCH.mutateAsync(
+                            {
+                              event_status: createEventStatus(listData?.date),
+                              id: listData?.id,
+                            }
+                          )
+                        )?.json;
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    };
+                    handler();
+                  }}
                   style={StyleSheet.applyWidth(
                     {
                       alignItems: 'stretch',
-                      backgroundColor: '"rgb(253, 253, 245)"',
+                      backgroundColor:
+                        palettes['Trail Twin']['Background - Trail Twin'],
                       borderColor: theme.colors.border.brand,
                       borderRadius: 12,
                       borderWidth: 0,
-                      marginBottom: 48,
+                      marginBottom: 56,
                       overflow: 'hidden',
                     },
                     dimensions.width
                   )}
                 >
-                  {/* Fetch component: no endpoint configured */ null}
                   <Touchable>
-                    <Image
-                      resizeMode={'cover'}
-                      {...GlobalStyles.ImageStyles(theme)['Image'].props}
-                      source={Images.screenshot20230807at101342am}
-                      style={StyleSheet.applyWidth(
-                        StyleSheet.compose(
-                          GlobalStyles.ImageStyles(theme)['Image'].style,
-                          { borderRadius: 12, height: 300, width: '100%' }
-                        ),
-                        dimensions.width
-                      )}
-                    />
+                    <EventPhotosApi.FetchGetEventPhotoGET
+                      event_id={listData?.id}
+                    >
+                      {({ loading, error, data, refetchGetEventPhoto }) => {
+                        const fetchData = data?.json;
+                        if (loading) {
+                          return <ActivityIndicator />;
+                        }
+
+                        if (
+                          error ||
+                          data?.status < 200 ||
+                          data?.status >= 300
+                        ) {
+                          return <ActivityIndicator />;
+                        }
+
+                        return (
+                          <Image
+                            resizeMode={'cover'}
+                            {...GlobalStyles.ImageStyles(theme)['Image'].props}
+                            source={imageSource(
+                              Images['screenshot20230807at101342am']
+                            )}
+                            style={StyleSheet.applyWidth(
+                              StyleSheet.compose(
+                                GlobalStyles.ImageStyles(theme)['Image'].style,
+                                { borderRadius: 12, height: 300, width: '100%' }
+                              ),
+                              dimensions.width
+                            )}
+                          />
+                        );
+                      }}
+                    </EventPhotosApi.FetchGetEventPhotoGET>
                     <View
                       style={StyleSheet.applyWidth(
                         {
                           alignItems: 'flex-start',
                           alignSelf: 'center',
-                          marginTop: 12,
+                          marginTop: 24,
                           width: '100%',
                         },
                         dimensions.width
                       )}
                     >
-                      {/* Title and Riders View */}
+                      {/* Title View */}
                       <View
                         style={StyleSheet.applyWidth(
                           {
                             alignContent: 'center',
-                            alignItems: 'stretch',
+                            alignItems: 'flex-start',
                             alignSelf: 'auto',
-                            flexDirection: 'row',
+                            flexDirection: 'column',
                             gap: 0,
-                            justifyContent: 'space-between',
-                            marginBottom: 1,
+                            justifyContent: 'flex-start',
+                            marginBottom: 6,
                             position: 'relative',
                             width: '100%',
                           },
                           dimensions.width
                         )}
                       >
-                        <View>
-                          <>
-                            {!listData?.event_name ? null : (
-                              <Text
-                                accessible={true}
-                                {...GlobalStyles.TextStyles(theme)['Text']
-                                  .props}
-                                style={StyleSheet.applyWidth(
-                                  StyleSheet.compose(
-                                    GlobalStyles.TextStyles(theme)['Text']
-                                      .style,
-                                    {
-                                      fontFamily: 'Inter_400Regular',
-                                      fontSize: 16,
-                                    }
-                                  ),
-                                  dimensions.width
-                                )}
-                              >
-                                {listData?.event_name}
-                              </Text>
-                            )}
-                          </>
-                        </View>
-                        {/* Riders View */}
+                        <>
+                          {!listData?.event_name ? null : (
+                            <Text
+                              accessible={true}
+                              selectable={false}
+                              {...GlobalStyles.TextStyles(theme)['Text'].props}
+                              style={StyleSheet.applyWidth(
+                                StyleSheet.compose(
+                                  GlobalStyles.TextStyles(theme)['Text'].style,
+                                  {
+                                    fontFamily: 'Inter_500Medium',
+                                    fontSize: 24,
+                                  }
+                                ),
+                                dimensions.width
+                              )}
+                            >
+                              {listData?.event_name}
+                            </Text>
+                          )}
+                        </>
+                      </View>
+                      {/* Skill and Ride Type 2 */}
+                      <View
+                        style={StyleSheet.applyWidth(
+                          {
+                            alignItems: 'center',
+                            flexDirection: 'row',
+                            marginBottom: 6,
+                          },
+                          dimensions.width
+                        )}
+                      >
                         <View
                           style={StyleSheet.applyWidth(
-                            {
-                              alignItems: 'center',
-                              flexDirection: 'row',
-                              justifyContent: 'flex-start',
-                              position: 'relative',
-                            },
+                            { flexDirection: 'row' },
                             dimensions.width
                           )}
                         >
-                          <SupabaseEventsApi.FetchGetAttendeesByEventIdGET
-                            eventId={listData?.id}
-                            handlers={{
-                              onData: fetchData => {
-                                try {
-                                  const num_attendees = fetchData?.length;
-                                  const formattedTotalRiders =
-                                    formatTotalRiders(num_attendees);
-                                } catch (err) {
-                                  console.error(err);
-                                }
+                          {/* Ride Type */}
+                          <Text
+                            accessible={true}
+                            selectable={false}
+                            ellipsizeMode={'tail'}
+                            numberOfLines={2}
+                            style={StyleSheet.applyWidth(
+                              {
+                                color: palettes.Brand['Secondary Text'],
+                                fontFamily: 'Inter_400Regular',
+                                fontSize: 14,
+                                lineHeight: 24,
                               },
-                            }}
-                            select={'*'}
+                              dimensions.width
+                            )}
                           >
-                            {({
-                              loading,
-                              error,
-                              data,
-                              refetchGetAttendeesByEventId,
-                            }) => {
-                              const fetchData = data?.json;
-                              if (loading) {
-                                return <ActivityIndicator />;
-                              }
-
-                              if (
-                                error ||
-                                data?.status < 200 ||
-                                data?.status >= 300
-                              ) {
-                                return <ActivityIndicator />;
-                              }
-
-                              return (
-                                <>
-                                  {/* Riders Text */}
-                                  <Text
-                                    accessible={true}
-                                    ellipsizeMode={'tail'}
-                                    numberOfLines={2}
-                                    style={StyleSheet.applyWidth(
-                                      {
-                                        color: palettes.Brand['Secondary Text'],
-                                        fontFamily: 'Inter_300Light',
-                                        fontSize: 12,
-                                        lineHeight: 24,
-                                      },
-                                      dimensions.width
-                                    )}
-                                  >
-                                    {formatTotalRiders(fetchData?.length)}
-                                    {' Riders'}
-                                  </Text>
-                                </>
-                              );
-                            }}
-                          </SupabaseEventsApi.FetchGetAttendeesByEventIdGET>
+                            {listData?.event_type}
+                            {' - '}
+                          </Text>
+                          {/* Skill */}
+                          <Text
+                            accessible={true}
+                            selectable={false}
+                            ellipsizeMode={'tail'}
+                            numberOfLines={2}
+                            style={StyleSheet.applyWidth(
+                              {
+                                color: palettes.Brand['Secondary Text'],
+                                fontFamily: 'Inter_400Regular',
+                                fontSize: 14,
+                                lineHeight: 24,
+                              },
+                              dimensions.width
+                            )}
+                          >
+                            {formatJSON(listData?.skill_level)}
+                          </Text>
                         </View>
                       </View>
                       {/* Trail View */}
@@ -288,103 +328,28 @@ const EventCardListBlock = props => {
                           {
                             alignItems: 'center',
                             flexDirection: 'row',
-                            marginBottom: 1,
+                            marginBottom: 6,
                           },
                           dimensions.width
                         )}
                       >
-                        <SupabaseEventsApi.FetchGetTrailNamesGET
-                          id={listData?.id}
-                          trail_names={'trail_names'}
-                        >
-                          {({ loading, error, data, refetchGetTrailNames }) => {
-                            const fetchData = data?.json;
-                            if (loading) {
-                              return <ActivityIndicator />;
-                            }
-
-                            if (
-                              error ||
-                              data?.status < 200 ||
-                              data?.status >= 300
-                            ) {
-                              return <ActivityIndicator />;
-                            }
-
-                            return (
-                              <SimpleStyleFlatList
-                                data={fetchData}
-                                horizontal={false}
-                                inverted={false}
-                                keyExtractor={(listData, index) =>
-                                  listData?.id ??
-                                  listData?.uuid ??
-                                  index.toString()
-                                }
-                                keyboardShouldPersistTaps={'never'}
-                                listKey={JSON.stringify(fetchData)}
-                                nestedScrollEnabled={false}
-                                numColumns={1}
-                                onEndReachedThreshold={0.5}
-                                renderItem={({ item, index }) => {
-                                  const listData = item;
-                                  return (
-                                    <>
-                                      {/* Trails Text */}
-                                      <Text
-                                        accessible={true}
-                                        ellipsizeMode={'tail'}
-                                        numberOfLines={2}
-                                        style={StyleSheet.applyWidth(
-                                          {
-                                            color:
-                                              palettes.Brand['Secondary Text'],
-                                            fontFamily: 'Inter_300Light',
-                                            fontSize: 12,
-                                            lineHeight: 24,
-                                          },
-                                          dimensions.width
-                                        )}
-                                      >
-                                        {listData?.trail_names}
-                                      </Text>
-                                    </>
-                                  );
-                                }}
-                                showsHorizontalScrollIndicator={true}
-                                showsVerticalScrollIndicator={true}
-                              />
-                            );
-                          }}
-                        </SupabaseEventsApi.FetchGetTrailNamesGET>
-                      </View>
-                      {/* Address View */}
-                      <View
-                        style={StyleSheet.applyWidth(
-                          {
-                            alignItems: 'center',
-                            flexDirection: 'row',
-                            marginBottom: 1,
-                          },
-                          dimensions.width
-                        )}
-                      >
-                        {/* Address Text */}
+                        {/* Trails Text */}
                         <Text
                           accessible={true}
+                          selectable={false}
                           ellipsizeMode={'tail'}
                           numberOfLines={2}
                           style={StyleSheet.applyWidth(
                             {
                               color: palettes.Brand['Secondary Text'],
-                              fontFamily: 'Inter_300Light',
-                              fontSize: 12,
-                              lineHeight: 24,
+                              fontFamily: 'Inter_400Regular',
+                              fontSize: 14,
                             },
                             dimensions.width
                           )}
                         >
-                          {listData?.address}
+                          {'Trails: '}
+                          {listData?.trail_names}
                         </Text>
                       </View>
                       {/* Date View */}
@@ -393,7 +358,9 @@ const EventCardListBlock = props => {
                           {
                             alignItems: 'center',
                             flexDirection: 'row',
-                            marginBottom: 1,
+                            gap: 0,
+                            justifyContent: 'flex-start',
+                            width: '100%',
                           },
                           dimensions.width
                         )}
@@ -401,83 +368,106 @@ const EventCardListBlock = props => {
                         {/* Date Text */}
                         <Text
                           accessible={true}
+                          selectable={false}
                           ellipsizeMode={'tail'}
                           numberOfLines={2}
                           style={StyleSheet.applyWidth(
                             {
                               color: palettes.Brand['Secondary Text'],
                               fontFamily: 'Inter_300Light',
-                              fontSize: 12,
-                              lineHeight: 24,
+                              fontSize: 14,
                             },
                             dimensions.width
                           )}
                         >
                           {formatDate(listData?.date)}
                           {', '}
-                          {listData?.start_time}
+                          {formatHours(listData?.start_time)}{' '}
+                          {formatAmPm(ampm, listData?.start_time)}
+                          {', '}
+                          {weather}
                         </Text>
-                      </View>
-                      {/* Tags View */}
-                      <View
-                        style={StyleSheet.applyWidth(
-                          {
-                            alignItems: 'center',
-                            flexDirection: 'row',
-                            flexWrap: 'wrap',
-                          },
-                          dimensions.width
-                        )}
-                      >
-                        {/* Tags Text */}
-                        <Text
-                          accessible={true}
+                        <Icon
+                          name={'Ionicons/partly-sunny-outline'}
+                          size={18}
                           style={StyleSheet.applyWidth(
-                            {
-                              color: palettes.Brand['Secondary Text'],
-                              fontFamily: 'Inter_300Light',
-                              fontSize: 12,
-                            },
+                            { marginLeft: 5, marginRight: 5 },
                             dimensions.width
                           )}
-                        >
-                          {null}
-                        </Text>
+                        />
                       </View>
                     </View>
                     {/* Button View */}
                     <View
                       style={StyleSheet.applyWidth(
-                        { marginBottom: 12, marginTop: 12, width: '100%' },
+                        {
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: 24,
+                          marginTop: 24,
+                          width: '100%',
+                        },
                         dimensions.width
                       )}
                     >
-                      <Button
-                        iconPosition={'left'}
-                        onPress={() => {
-                          try {
-                            navigation.navigate('EventDetailsScreen', {
-                              event_id: listData?.id,
-                            });
-                          } catch (err) {
-                            console.error(err);
-                          }
-                        }}
-                        {...GlobalStyles.ButtonStyles(theme)['Button'].props}
-                        style={StyleSheet.applyWidth(
-                          StyleSheet.compose(
-                            GlobalStyles.ButtonStyles(theme)['Button'].style,
-                            {
-                              backgroundColor: '"rgb(48, 93, 35)"',
-                              borderRadius: 12,
-                              fontFamily: 'Inter_300Light',
-                              fontSize: 16,
-                            }
-                          ),
-                          dimensions.width
+                      <>
+                        {Constants['loading'] ? null : (
+                          <Button
+                            iconPosition={'left'}
+                            onPress={() => {
+                              const handler = async () => {
+                                try {
+                                  setGlobalVariableValue({
+                                    key: 'loading',
+                                    value: true,
+                                  });
+                                  setGlobalVariableValue({
+                                    key: 'eventDetailsId',
+                                    value: listData?.id,
+                                  });
+                                  console.log(Constants['eventDetailsId']);
+                                  await waitUtil({ milliseconds: 1000 });
+                                  navigation.navigate('EventDetailsScreen', {
+                                    event_id: Constants['eventDetailsId'],
+                                  });
+                                } catch (err) {
+                                  console.error(err);
+                                }
+                              };
+                              handler();
+                            }}
+                            {...GlobalStyles.ButtonStyles(theme)['Button']
+                              .props}
+                            style={StyleSheet.applyWidth(
+                              StyleSheet.compose(
+                                GlobalStyles.ButtonStyles(theme)['Button']
+                                  .style,
+                                {
+                                  backgroundColor:
+                                    palettes['Trail Twin'][
+                                      'Secondary Green #2 - Trail Twin'
+                                    ],
+                                  fontFamily: 'Inter_400Regular',
+                                  fontSize: 14,
+                                  height: 15,
+                                  width: '100%',
+                                }
+                              ),
+                              dimensions.width
+                            )}
+                            title={'View Event'}
+                          />
                         )}
-                        title={'View Ride'}
-                      />
+                      </>
+                      <>
+                        {!Constants['loading'] ? null : (
+                          <LoadingIndicator
+                            size={30}
+                            color={palettes.Brand['Secondary Grey']}
+                            type={'flow'}
+                          />
+                        )}
+                      </>
                     </View>
                   </Touchable>
                 </View>
@@ -485,7 +475,11 @@ const EventCardListBlock = props => {
             }}
             showsHorizontalScrollIndicator={true}
             showsVerticalScrollIndicator={true}
-            inverted={true}
+            inverted={false}
+            style={StyleSheet.applyWidth(
+              { flexDirection: 'column' },
+              dimensions.width
+            )}
           />
         );
       }}

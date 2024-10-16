@@ -3,12 +3,44 @@ import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const DeviceVariables = { __env__: 'Development' };
+export const DeviceVariables = {
+  AUTHORIZATION_HEADER: '',
+  eventDetailsId: '',
+  eventTypeFilter: null,
+  filteredEvents: null,
+  loading: '',
+  maxDateFilter: null,
+  meetupLat: '',
+  meetupLon: '',
+  minDateFilter: null,
+  otherUserId: '',
+  rideNameFilter: null,
+  searchRadius: '25000',
+  skillLevelFilter: null,
+  startTimeAfterFilter: null,
+  startTimeBeforeFilter: null,
+  tagsFilter: null,
+  trailFilter: null,
+  userAgeFilter: '',
+  user_id: '83c157ee-a61a-4f39-bba7-4947c8a7193t34t',
+  userLocationFilter: '',
+  userLookingForFilter: '',
+  userNameFilter: '',
+  userRidingStyleFilter: '',
+  usersChatIds: '',
+  userSkillLevelFilter: '',
+  usersLocationLat: '',
+  usersLocationLon: '',
+  usersName: '',
+  __env__: 'Development',
+};
 export const AppVariables = {
   apiKey:
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0aWFmZ2tyanltcHdkc3ZpaWV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0MjgwMjYsImV4cCI6MjAyODAwNDAyNn0.Ly8zLLQw6t6HJqKLkXwraq7konBpKSrN6fg6DdMMnUw',
-  AUTHORIZATION_HEADER:
-    'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0aWFmZ2tyanltcHdkc3ZpaWV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0MjgwMjYsImV4cCI6MjAyODAwNDAyNn0.Ly8zLLQw6t6HJqKLkXwraq7konBpKSrN6fg6DdMMnUw',
+  APP_KEY_HEADER:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN0aWFmZ2tyanltcHdkc3ZpaWV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI0MjgwMjYsImV4cCI6MjAyODAwNDAyNn0.Ly8zLLQw6t6HJqKLkXwraq7konBpKSrN6fg6DdMMnUw',
+  ERROR_MESSAGE: '',
+  HEADER: '',
   searchAndFilterQuery: '',
 };
 const GlobalVariableContext = React.createContext();

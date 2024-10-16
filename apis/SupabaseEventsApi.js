@@ -39,7 +39,7 @@ export const createAttendeePOST = async (
     }),
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
       apiKey: Constants['apiKey'],
@@ -120,40 +120,42 @@ export const FetchCreateAttendeePOST = ({
 export const createEventPOST = async (
   Constants,
   {
-    addressInputV1,
-    dateInputV1,
-    descriptionInputV1,
-    hostAgeInputV1,
-    hostNameInputV1,
-    imageDbUrl,
-    invitesInputV1,
-    partySizeInputV1,
+    dateInput,
+    descriptionInput,
+    eventTypeInput,
+    maxPartySizeInput,
+    meetupLat,
+    meetupLon,
+    rideLength,
     rideNameInput,
-    startTimeInputV1,
-    tagsInputV1,
-    trailNameInputV1,
+    skillLevelInput,
+    startTimeInput,
+    tagsInput,
+    trailNameInput,
+    user_id,
   },
   handlers = {}
 ) => {
   const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events`;
   const options = {
     body: JSON.stringify({
-      host_name: hostNameInputV1,
-      host_age: hostAgeInputV1,
-      trail_names: trailNameInputV1,
       event_name: rideNameInput,
-      party_size: partySizeInputV1,
-      address: addressInputV1,
-      start_time: startTimeInputV1,
-      date: dateInputV1,
-      invites: invitesInputV1,
-      tags: tagsInputV1,
-      event_description: descriptionInputV1,
-      safety_selfie: imageDbUrl,
+      trail_names: trailNameInput,
+      event_description: descriptionInput,
+      max_party_size: maxPartySizeInput,
+      start_time: startTimeInput,
+      date: dateInput,
+      event_type: eventTypeInput,
+      skill_level: skillLevelInput,
+      tags: tagsInput,
+      meetup_lat: meetupLat,
+      meetup_lon: meetupLon,
+      host_id: user_id,
+      ride_length: rideLength,
     }),
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
       apiKey: Constants['apiKey'],
@@ -191,18 +193,19 @@ export const FetchCreateEventPOST = ({
   onData = () => {},
   handlers = {},
   refetchInterval,
-  addressInputV1,
-  dateInputV1,
-  descriptionInputV1,
-  hostAgeInputV1,
-  hostNameInputV1,
-  imageDbUrl,
-  invitesInputV1,
-  partySizeInputV1,
+  dateInput,
+  descriptionInput,
+  eventTypeInput,
+  maxPartySizeInput,
+  meetupLat,
+  meetupLon,
+  rideLength,
   rideNameInput,
-  startTimeInputV1,
-  tagsInputV1,
-  trailNameInputV1,
+  skillLevelInput,
+  startTimeInput,
+  tagsInput,
+  trailNameInput,
+  user_id,
 }) => {
   const Constants = GlobalVariables.useValues();
   const isFocused = useIsFocused();
@@ -215,18 +218,19 @@ export const FetchCreateEventPOST = ({
     mutate: refetch,
   } = useCreateEventPOST(
     {
-      addressInputV1,
-      dateInputV1,
-      descriptionInputV1,
-      hostAgeInputV1,
-      hostNameInputV1,
-      imageDbUrl,
-      invitesInputV1,
-      partySizeInputV1,
+      dateInput,
+      descriptionInput,
+      eventTypeInput,
+      maxPartySizeInput,
+      meetupLat,
+      meetupLon,
+      rideLength,
       rideNameInput,
-      startTimeInputV1,
-      tagsInputV1,
-      trailNameInputV1,
+      skillLevelInput,
+      startTimeInput,
+      tagsInput,
+      trailNameInput,
+      user_id,
     },
     { refetchInterval, handlers: { onData, ...handlers } }
   );
@@ -246,123 +250,6 @@ export const FetchCreateEventPOST = ({
   return children({ loading, data, error, refetchCreateEvent: refetch });
 };
 
-export const deleteEventByIDDELETE = async (
-  Constants,
-  { id, select },
-  handlers = {}
-) => {
-  const paramsDict = {};
-  paramsDict['select'] = select !== undefined ? renderParam(select) : '';
-  if (id !== undefined) {
-    paramsDict['id'] = `eq.${renderParam(id)}`;
-  }
-  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
-    paramsDict
-  )}`;
-  const options = {
-    headers: cleanHeaders({
-      Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
-      'Content-Type': 'application/json',
-      apiKey: Constants['apiKey'],
-    }),
-    method: 'DELETE',
-  };
-  const res = await fetch(url, options);
-  return handleResponse(res, handlers);
-};
-
-export const useDeleteEventByIDDELETE = (
-  initialArgs = {},
-  { handlers = {} } = {}
-) => {
-  const queryClient = useQueryClient();
-  const Constants = GlobalVariables.useValues();
-  return useMutation(
-    args =>
-      deleteEventByIDDELETE(Constants, { ...initialArgs, ...args }, handlers),
-    {
-      onError: (err, variables, { previousValue }) => {
-        if (previousValue) {
-          return queryClient.setQueryData('events', previousValue);
-        }
-      },
-      onSettled: () => {
-        queryClient.invalidateQueries('event');
-        queryClient.invalidateQueries('events');
-      },
-    }
-  );
-};
-
-export const getAttendeesGET = async (Constants, { select }, handlers = {}) => {
-  const paramsDict = {};
-  paramsDict['select'] = select !== undefined ? renderParam(select) : '';
-  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/attendees${renderQueryString(
-    paramsDict
-  )}`;
-  const options = {
-    headers: cleanHeaders({
-      Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
-      'Content-Type': 'application/json',
-      apiKey: Constants['apiKey'],
-    }),
-  };
-  const res = await fetch(url, options);
-  return handleResponse(res, handlers);
-};
-
-export const useGetAttendeesGET = (
-  args = {},
-  { refetchInterval, handlers = {} } = {}
-) => {
-  const Constants = GlobalVariables.useValues();
-  return useQuery(
-    ['attendees', args],
-    () => getAttendeesGET(Constants, args, handlers),
-    {
-      refetchInterval,
-    }
-  );
-};
-
-export const FetchGetAttendeesGET = ({
-  children,
-  onData = () => {},
-  handlers = {},
-  refetchInterval,
-  select,
-}) => {
-  const Constants = GlobalVariables.useValues();
-  const isFocused = useIsFocused();
-  const prevIsFocused = usePrevious(isFocused);
-
-  const {
-    isLoading: loading,
-    data,
-    error,
-    refetch,
-  } = useGetAttendeesGET(
-    { select },
-    { refetchInterval, handlers: { onData, ...handlers } }
-  );
-
-  React.useEffect(() => {
-    if (!prevIsFocused && isFocused) {
-      refetch();
-    }
-  }, [isFocused, prevIsFocused]);
-
-  React.useEffect(() => {
-    if (error) {
-      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
-      console.error(error);
-    }
-  }, [error]);
-  return children({ loading, data, error, refetchGetAttendees: refetch });
-};
-
 export const getAttendeesByEventIdGET = async (
   Constants,
   { eventId, select },
@@ -378,7 +265,7 @@ export const getAttendeesByEventIdGET = async (
   const options = {
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       apiKey: Constants['apiKey'],
     }),
@@ -443,14 +330,14 @@ export const FetchGetAttendeesByEventIdGET = ({
   });
 };
 
-export const getEventDescriptionGET = async (
+export const getEventDetailGET = async (
   Constants,
-  { event_description, id },
+  { detail, id },
   handlers = {}
 ) => {
   const paramsDict = {};
-  if (event_description !== undefined) {
-    paramsDict['select'] = renderParam(event_description);
+  if (detail !== undefined) {
+    paramsDict['select'] = renderParam(detail);
   }
   paramsDict['id'] = id !== undefined ? `eq.${renderParam(id)}` : '';
   const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
@@ -459,7 +346,7 @@ export const getEventDescriptionGET = async (
   const options = {
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       apiKey: Constants['apiKey'],
     }),
@@ -468,7 +355,7 @@ export const getEventDescriptionGET = async (
   return handleResponse(res, handlers);
 };
 
-export const useGetEventDescriptionGET = (
+export const useGetEventDetailGET = (
   args = {},
   { refetchInterval, handlers = {} } = {}
 ) => {
@@ -476,7 +363,7 @@ export const useGetEventDescriptionGET = (
   const queryClient = useQueryClient();
   return useQuery(
     ['event', args],
-    () => getEventDescriptionGET(Constants, args, handlers),
+    () => getEventDetailGET(Constants, args, handlers),
     {
       refetchInterval,
       onSuccess: () => queryClient.invalidateQueries(['events']),
@@ -484,12 +371,12 @@ export const useGetEventDescriptionGET = (
   );
 };
 
-export const FetchGetEventDescriptionGET = ({
+export const FetchGetEventDetailGET = ({
   children,
   onData = () => {},
   handlers = {},
   refetchInterval,
-  event_description,
+  detail,
   id,
 }) => {
   const Constants = GlobalVariables.useValues();
@@ -501,8 +388,8 @@ export const FetchGetEventDescriptionGET = ({
     data,
     error,
     refetch,
-  } = useGetEventDescriptionGET(
-    { event_description, id },
+  } = useGetEventDetailGET(
+    { detail, id },
     { refetchInterval, handlers: { onData, ...handlers } }
   );
 
@@ -518,12 +405,82 @@ export const FetchGetEventDescriptionGET = ({
       console.error(error);
     }
   }, [error]);
-  return children({
-    loading,
+  return children({ loading, data, error, refetchGetEventDetail: refetch });
+};
+
+export const getEventByHostIdGET = async (
+  Constants,
+  { host_id, select },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  paramsDict['select'] = select !== undefined ? renderParam(select) : '';
+  paramsDict['host_id'] =
+    host_id !== undefined ? `eq.${renderParam(host_id)}` : '';
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useGetEventByHostIdGET = (
+  args = {},
+  { refetchInterval, handlers = {} } = {}
+) => {
+  const Constants = GlobalVariables.useValues();
+  return useQuery(
+    ['events', args],
+    () => getEventByHostIdGET(Constants, args, handlers),
+    {
+      refetchInterval,
+    }
+  );
+};
+
+export const FetchGetEventByHostIdGET = ({
+  children,
+  onData = () => {},
+  handlers = {},
+  refetchInterval,
+  host_id,
+  select,
+}) => {
+  const Constants = GlobalVariables.useValues();
+  const isFocused = useIsFocused();
+  const prevIsFocused = usePrevious(isFocused);
+
+  const {
+    isLoading: loading,
     data,
     error,
-    refetchGetEventDescription: refetch,
-  });
+    refetch,
+  } = useGetEventByHostIdGET(
+    { host_id, select },
+    { refetchInterval, handlers: { onData, ...handlers } }
+  );
+
+  React.useEffect(() => {
+    if (!prevIsFocused && isFocused) {
+      refetch();
+    }
+  }, [isFocused, prevIsFocused]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
+      console.error(error);
+    }
+  }, [error]);
+  return children({ loading, data, error, refetchGetEventByHostId: refetch });
 };
 
 export const getEventsGET = async (Constants, { select }, handlers = {}) => {
@@ -535,7 +492,7 @@ export const getEventsGET = async (Constants, { select }, handlers = {}) => {
   const options = {
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       apiKey: Constants['apiKey'],
     }),
@@ -594,162 +551,6 @@ export const FetchGetEventsGET = ({
   return children({ loading, data, error, refetchGetEvents: refetch });
 };
 
-export const getHostInfoGET = async (
-  Constants,
-  { host_age, id, saftey_selfie },
-  handlers = {}
-) => {
-  const paramsDict = {};
-  if (host_age !== undefined) {
-    paramsDict['select'] = renderParam(host_age);
-  }
-  paramsDict['id'] = id !== undefined ? `eq.${renderParam(id)}` : '';
-  if (saftey_selfie !== undefined) {
-    paramsDict['select'] = renderParam(saftey_selfie);
-  }
-  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
-    paramsDict
-  )}`;
-  const options = {
-    headers: cleanHeaders({
-      Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
-      'Content-Type': 'application/json',
-      apiKey: Constants['apiKey'],
-    }),
-  };
-  const res = await fetch(url, options);
-  return handleResponse(res, handlers);
-};
-
-export const useGetHostInfoGET = (
-  args = {},
-  { refetchInterval, handlers = {} } = {}
-) => {
-  const Constants = GlobalVariables.useValues();
-  return useQuery(
-    ['events', args],
-    () => getHostInfoGET(Constants, args, handlers),
-    {
-      refetchInterval,
-    }
-  );
-};
-
-export const FetchGetHostInfoGET = ({
-  children,
-  onData = () => {},
-  handlers = {},
-  refetchInterval,
-  host_age,
-  id,
-  saftey_selfie,
-}) => {
-  const Constants = GlobalVariables.useValues();
-  const isFocused = useIsFocused();
-  const prevIsFocused = usePrevious(isFocused);
-
-  const {
-    isLoading: loading,
-    data,
-    error,
-    refetch,
-  } = useGetHostInfoGET(
-    { host_age, id, saftey_selfie },
-    { refetchInterval, handlers: { onData, ...handlers } }
-  );
-
-  React.useEffect(() => {
-    if (!prevIsFocused && isFocused) {
-      refetch();
-    }
-  }, [isFocused, prevIsFocused]);
-
-  React.useEffect(() => {
-    if (error) {
-      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
-      console.error(error);
-    }
-  }, [error]);
-  return children({ loading, data, error, refetchGetHostInfo: refetch });
-};
-
-export const getSingleAttendeeGET = async (
-  Constants,
-  { id, select },
-  handlers = {}
-) => {
-  const paramsDict = {};
-  paramsDict['select'] = select !== undefined ? renderParam(select) : '';
-  paramsDict['id'] = id !== undefined ? `eq.${renderParam(id)}` : '';
-  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/attendees${renderQueryString(
-    paramsDict
-  )}`;
-  const options = {
-    headers: cleanHeaders({
-      Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
-      'Content-Type': 'application/json',
-      apiKey: Constants['apiKey'],
-    }),
-  };
-  const res = await fetch(url, options);
-  return handleResponse(res, handlers);
-};
-
-export const useGetSingleAttendeeGET = (
-  args = {},
-  { refetchInterval, handlers = {} } = {}
-) => {
-  const Constants = GlobalVariables.useValues();
-  const queryClient = useQueryClient();
-  return useQuery(
-    ['attendee', args],
-    () => getSingleAttendeeGET(Constants, args, handlers),
-    {
-      refetchInterval,
-      onSuccess: () => queryClient.invalidateQueries(['attendees']),
-    }
-  );
-};
-
-export const FetchGetSingleAttendeeGET = ({
-  children,
-  onData = () => {},
-  handlers = {},
-  refetchInterval,
-  id,
-  select,
-}) => {
-  const Constants = GlobalVariables.useValues();
-  const isFocused = useIsFocused();
-  const prevIsFocused = usePrevious(isFocused);
-
-  const {
-    isLoading: loading,
-    data,
-    error,
-    refetch,
-  } = useGetSingleAttendeeGET(
-    { id, select },
-    { refetchInterval, handlers: { onData, ...handlers } }
-  );
-
-  React.useEffect(() => {
-    if (!prevIsFocused && isFocused) {
-      refetch();
-    }
-  }, [isFocused, prevIsFocused]);
-
-  React.useEffect(() => {
-    if (error) {
-      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
-      console.error(error);
-    }
-  }, [error]);
-  return children({ loading, data, error, refetchGetSingleAttendee: refetch });
-};
-
 export const getSingleEventGET = async (
   Constants,
   { id, select },
@@ -764,7 +565,7 @@ export const getSingleEventGET = async (
   const options = {
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       apiKey: Constants['apiKey'],
     }),
@@ -826,6 +627,84 @@ export const FetchGetSingleEventGET = ({
   return children({ loading, data, error, refetchGetSingleEvent: refetch });
 };
 
+export const getTotalRidersGET = async (
+  Constants,
+  { id, total_riders },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  if (total_riders !== undefined) {
+    paramsDict['select'] = renderParam(total_riders);
+  }
+  paramsDict['id'] = id !== undefined ? `eq.${renderParam(id)}` : '';
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useGetTotalRidersGET = (
+  args = {},
+  { refetchInterval, handlers = {} } = {}
+) => {
+  const Constants = GlobalVariables.useValues();
+  const queryClient = useQueryClient();
+  return useQuery(
+    ['event', args],
+    () => getTotalRidersGET(Constants, args, handlers),
+    {
+      refetchInterval,
+      onSuccess: () => queryClient.invalidateQueries(['events']),
+    }
+  );
+};
+
+export const FetchGetTotalRidersGET = ({
+  children,
+  onData = () => {},
+  handlers = {},
+  refetchInterval,
+  id,
+  total_riders,
+}) => {
+  const Constants = GlobalVariables.useValues();
+  const isFocused = useIsFocused();
+  const prevIsFocused = usePrevious(isFocused);
+
+  const {
+    isLoading: loading,
+    data,
+    error,
+    refetch,
+  } = useGetTotalRidersGET(
+    { id, total_riders },
+    { refetchInterval, handlers: { onData, ...handlers } }
+  );
+
+  React.useEffect(() => {
+    if (!prevIsFocused && isFocused) {
+      refetch();
+    }
+  }, [isFocused, prevIsFocused]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
+      console.error(error);
+    }
+  }, [error]);
+  return children({ loading, data, error, refetchGetTotalRiders: refetch });
+};
+
 export const getTrailNamesGET = async (
   Constants,
   { id, trail_names },
@@ -842,7 +721,7 @@ export const getTrailNamesGET = async (
   const options = {
     headers: cleanHeaders({
       Accept: 'application/json',
-      Authorization: Constants['AUTHORIZATION_HEADER'],
+      Authorization: Constants['HEADER'],
       'Content-Type': 'application/json',
       apiKey: Constants['apiKey'],
     }),
@@ -902,4 +781,333 @@ export const FetchGetTrailNamesGET = ({
     }
   }, [error]);
   return children({ loading, data, error, refetchGetTrailNames: refetch });
+};
+
+export const getMeetupLatGET = async (
+  Constants,
+  { id, meetupLat },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  if (meetupLat !== undefined) {
+    paramsDict['select'] = renderParam(meetupLat);
+  }
+  paramsDict['id'] = id !== undefined ? `eq.${renderParam(id)}` : '';
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useGetMeetupLatGET = (
+  args = {},
+  { refetchInterval, handlers = {} } = {}
+) => {
+  const Constants = GlobalVariables.useValues();
+  const queryClient = useQueryClient();
+  return useQuery(
+    ['event', args],
+    () => getMeetupLatGET(Constants, args, handlers),
+    {
+      refetchInterval,
+      onSuccess: () => queryClient.invalidateQueries(['events']),
+    }
+  );
+};
+
+export const FetchGetMeetupLatGET = ({
+  children,
+  onData = () => {},
+  handlers = {},
+  refetchInterval,
+  id,
+  meetupLat,
+}) => {
+  const Constants = GlobalVariables.useValues();
+  const isFocused = useIsFocused();
+  const prevIsFocused = usePrevious(isFocused);
+
+  const {
+    isLoading: loading,
+    data,
+    error,
+    refetch,
+  } = useGetMeetupLatGET(
+    { id, meetupLat },
+    { refetchInterval, handlers: { onData, ...handlers } }
+  );
+
+  React.useEffect(() => {
+    if (!prevIsFocused && isFocused) {
+      refetch();
+    }
+  }, [isFocused, prevIsFocused]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
+      console.error(error);
+    }
+  }, [error]);
+  return children({ loading, data, error, refetchGetMeetupLat: refetch });
+};
+
+export const getMeetupLonGET = async (
+  Constants,
+  { id, meetupLon },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  if (meetupLon !== undefined) {
+    paramsDict['select'] = renderParam(meetupLon);
+  }
+  paramsDict['id'] = id !== undefined ? `eq.${renderParam(id)}` : '';
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useGetMeetupLonGET = (
+  args = {},
+  { refetchInterval, handlers = {} } = {}
+) => {
+  const Constants = GlobalVariables.useValues();
+  const queryClient = useQueryClient();
+  return useQuery(
+    ['event', args],
+    () => getMeetupLonGET(Constants, args, handlers),
+    {
+      refetchInterval,
+      onSuccess: () => queryClient.invalidateQueries(['events']),
+    }
+  );
+};
+
+export const FetchGetMeetupLonGET = ({
+  children,
+  onData = () => {},
+  handlers = {},
+  refetchInterval,
+  id,
+  meetupLon,
+}) => {
+  const Constants = GlobalVariables.useValues();
+  const isFocused = useIsFocused();
+  const prevIsFocused = usePrevious(isFocused);
+
+  const {
+    isLoading: loading,
+    data,
+    error,
+    refetch,
+  } = useGetMeetupLonGET(
+    { id, meetupLon },
+    { refetchInterval, handlers: { onData, ...handlers } }
+  );
+
+  React.useEffect(() => {
+    if (!prevIsFocused && isFocused) {
+      refetch();
+    }
+  }, [isFocused, prevIsFocused]);
+
+  React.useEffect(() => {
+    if (error) {
+      console.error('Fetch error: ' + error.status + ' ' + error.statusText);
+      console.error(error);
+    }
+  }, [error]);
+  return children({ loading, data, error, refetchGetMeetupLon: refetch });
+};
+
+export const updateAttendeesPUT = async (
+  Constants,
+  { attendeeIds, id },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  if (id !== undefined) {
+    paramsDict['id'] = `eq.${renderParam(id)}`;
+  }
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    body: JSON.stringify({ id: id, attendee_ids: attendeeIds }),
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+    method: 'PUT',
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useUpdateAttendeesPUT = (
+  initialArgs = {},
+  { handlers = {} } = {}
+) => {
+  const queryClient = useQueryClient();
+  const Constants = GlobalVariables.useValues();
+  return useMutation(
+    args =>
+      updateAttendeesPUT(Constants, { ...initialArgs, ...args }, handlers),
+    {
+      onError: (err, variables, { previousValue }) => {
+        if (previousValue) {
+          return queryClient.setQueryData('events', previousValue);
+        }
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries('event');
+        queryClient.invalidateQueries('events');
+      },
+    }
+  );
+};
+
+export const updateEventPATCH = async (
+  Constants,
+  {
+    evenDesc,
+    eventDate,
+    eventLat,
+    eventLon,
+    eventName,
+    eventPartySize,
+    eventRideLength,
+    eventSkill,
+    eventTags,
+    eventTime,
+    eventTrails,
+    eventType,
+    id,
+  },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  if (id !== undefined) {
+    paramsDict['id'] = `eq.${renderParam(id)}`;
+  }
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    body: JSON.stringify({
+      event_name: eventName,
+      start_time: eventTime,
+      date: eventDate,
+      tags: eventTags,
+      event_description: evenDesc,
+      trail_names: eventTrails,
+      meetup_lat: eventLat,
+      meetup_lon: eventLon,
+      skill_level: eventSkill,
+      event_type: eventType,
+      max_party_size: eventPartySize,
+      ride_length: eventRideLength,
+    }),
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+    method: 'PATCH',
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useUpdateEventPATCH = (
+  initialArgs = {},
+  { handlers = {} } = {}
+) => {
+  const queryClient = useQueryClient();
+  const Constants = GlobalVariables.useValues();
+  return useMutation(
+    args => updateEventPATCH(Constants, { ...initialArgs, ...args }, handlers),
+    {
+      onError: (err, variables, { previousValue }) => {
+        if (previousValue) {
+          return queryClient.setQueryData('events', previousValue);
+        }
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries('event');
+        queryClient.invalidateQueries('events');
+      },
+    }
+  );
+};
+
+export const updateEventStatusPATCH = async (
+  Constants,
+  { event_status, id },
+  handlers = {}
+) => {
+  const paramsDict = {};
+  if (id !== undefined) {
+    paramsDict['id'] = `eq.${renderParam(id)}`;
+  }
+  const url = `https://ctiafgkrjympwdsviiew.supabase.co/rest/v1/events${renderQueryString(
+    paramsDict
+  )}`;
+  const options = {
+    body: JSON.stringify({ event_status: event_status }),
+    headers: cleanHeaders({
+      Accept: 'application/json',
+      Authorization: Constants['HEADER'],
+      'Content-Type': 'application/json',
+      apiKey: Constants['apiKey'],
+    }),
+    method: 'PATCH',
+  };
+  const res = await fetch(url, options);
+  return handleResponse(res, handlers);
+};
+
+export const useUpdateEventStatusPATCH = (
+  initialArgs = {},
+  { handlers = {} } = {}
+) => {
+  const queryClient = useQueryClient();
+  const Constants = GlobalVariables.useValues();
+  return useMutation(
+    args =>
+      updateEventStatusPATCH(Constants, { ...initialArgs, ...args }, handlers),
+    {
+      onError: (err, variables, { previousValue }) => {
+        if (previousValue) {
+          return queryClient.setQueryData('events', previousValue);
+        }
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries('event');
+        queryClient.invalidateQueries('events');
+      },
+    }
+  );
 };

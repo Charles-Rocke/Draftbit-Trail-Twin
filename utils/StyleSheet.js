@@ -1,12 +1,7 @@
-'use strict';
-Object.defineProperty(exports, '__esModule', { value: true });
-exports.create = exports.compose = exports.applyWidth = void 0; //******* FILE IS COPIED FROM ../builder/src/utilities/StyleSheet.js ******
-//************************* DO NOT EDIT BY HAND ************************
-const create = styles => styles;
+export const create = styles => styles;
 
 // Like StyleSheet.compose, but concatenates shared keys' values into arrays.
-exports.create = create;
-const compose = (style1, style2) => {
+export const compose = (style1, style2) => {
   const res = { ...style1 };
   if (!style1) {
     return style2;
@@ -30,18 +25,42 @@ const compose = (style1, style2) => {
   }
   return res;
 };
-exports.compose = compose;
 
-const isValidStyleValue = value =>
-  value === null ||
-  value === undefined ||
-  (value !== '' && ['string', 'number'].includes(typeof value));
+export const getWidthValue = (v, width, isValid) => {
+  let resV;
+  // If there is an array of values, choose the last one with the largest minWidth
+  // which fits in the current screen width
+  if (Array.isArray(v)) {
+    let maxMinWidth = 0;
+    v.forEach(innerV => {
+      const minWidth = innerV?.minWidth ?? 0;
+      const value = innerV?.value ?? innerV;
+      if (
+        (!isValid || isValid(value)) &&
+        minWidth <= width &&
+        minWidth >= maxMinWidth
+      ) {
+        resV = value;
+        maxMinWidth = minWidth;
+      }
+    });
+    // Otherwise, check if the value fits in the current screen width
+  } else {
+    const minWidth = v?.minWidth ?? 0;
+    const value = v?.value ?? v;
+    if ((!isValid || isValid(value)) && minWidth <= width) {
+      resV = value;
+    }
+  }
+
+  return resV;
+};
 
 // Given a window width, convert a the style to a StyleSheet style, using values from
 // the highest and most recent minWidth for each style key, which fits within the minWidth.
 //
 // Also filters to output specific style keys based on the 'styleKeys' argument. Returns all if undefined
-const applyWidth = (style, width, styleKeys) => {
+export const applyWidth = (style, width, styleKeys) => {
   const res = {};
   if (!style) {
     return {};
@@ -50,35 +69,13 @@ const applyWidth = (style, width, styleKeys) => {
     if (Array.isArray(styleKeys) && !styleKeys.includes(k)) {
       continue;
     }
-
-    let resV;
-    // If there is an array of values, choose the last one with the largest minWidth
-    // which fits in the current screen width
-    if (Array.isArray(v)) {
-      let maxMinWidth = 0;
-      v.forEach(innerV => {
-        const minWidth = innerV?.minWidth ?? 0;
-        const value = innerV?.value ?? innerV;
-        if (
-          isValidStyleValue(value) &&
-          minWidth <= width &&
-          minWidth >= maxMinWidth
-        ) {
-          resV = value;
-          maxMinWidth = minWidth;
-        }
-      });
-      // Otherwise, check if the value fits in the current screen width
-    } else {
-      const minWidth = v?.minWidth ?? 0;
-      const value = v?.value ?? v;
-      if (isValidStyleValue(value) && minWidth <= width) {
-        resV = value;
-      }
-    }
-    res[k] = resV;
+    res[k] = getWidthValue(
+      v,
+      width,
+      value =>
+        value == null ||
+        (value !== '' && ['string', 'number'].includes(typeof value))
+    );
   }
   return res;
 };
-exports.applyWidth = applyWidth;
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJuYW1lcyI6WyJjcmVhdGUiLCJzdHlsZXMiLCJleHBvcnRzIiwiY29tcG9zZSIsInN0eWxlMSIsInN0eWxlMiIsInJlcyIsImsiLCJ2IiwiT2JqZWN0IiwiZW50cmllcyIsInJlc1YiLCJ1bmRlZmluZWQiLCJBcnJheSIsImlzQXJyYXkiLCJjb25jYXQiLCJpc1ZhbGlkU3R5bGVWYWx1ZSIsInZhbHVlIiwiaW5jbHVkZXMiLCJhcHBseVdpZHRoIiwic3R5bGUiLCJ3aWR0aCIsInN0eWxlS2V5cyIsIm1heE1pbldpZHRoIiwiZm9yRWFjaCIsImlubmVyViIsIm1pbldpZHRoIl0sInNvdXJjZXMiOlsiLi4vLi4vLi4vc3JjL3V0aWxzL1N0eWxlU2hlZXQuanMiXSwic291cmNlc0NvbnRlbnQiOlsiLy8qKioqKioqIEZJTEUgSVMgQ09QSUVEIEZST00gLi4vYnVpbGRlci9zcmMvdXRpbGl0aWVzL1N0eWxlU2hlZXQuanMgKioqKioqXG4vLyoqKioqKioqKioqKioqKioqKioqKioqKiogRE8gTk9UIEVESVQgQlkgSEFORCAqKioqKioqKioqKioqKioqKioqKioqKipcbmV4cG9ydCBjb25zdCBjcmVhdGUgPSBzdHlsZXMgPT4gc3R5bGVzO1xuXG4vLyBMaWtlIFN0eWxlU2hlZXQuY29tcG9zZSwgYnV0IGNvbmNhdGVuYXRlcyBzaGFyZWQga2V5cycgdmFsdWVzIGludG8gYXJyYXlzLlxuZXhwb3J0IGNvbnN0IGNvbXBvc2UgPSAoc3R5bGUxLCBzdHlsZTIpID0+IHtcbiAgY29uc3QgcmVzID0geyAuLi5zdHlsZTEgfTtcbiAgaWYgKCFzdHlsZTEpIHtcbiAgICByZXR1cm4gc3R5bGUyO1xuICB9XG4gIGlmICghc3R5bGUyKSB7XG4gICAgcmV0dXJuIHN0eWxlMTtcbiAgfVxuICBmb3IgKGNvbnN0IFtrLCB2XSBvZiBPYmplY3QuZW50cmllcyhzdHlsZTIpKSB7XG4gICAgbGV0IHJlc1YgPSByZXNba107XG4gICAgaWYgKHJlc1YgPT09IHVuZGVmaW5lZCkge1xuICAgICAgcmVzW2tdID0gdjtcbiAgICB9IGVsc2UgaWYgKEFycmF5LmlzQXJyYXkocmVzVikgJiYgQXJyYXkuaXNBcnJheSh2KSkge1xuICAgICAgcmVzW2tdID0gcmVzVi5jb25jYXQodik7XG4gICAgfSBlbHNlIGlmIChBcnJheS5pc0FycmF5KHJlc1YpKSB7XG4gICAgICByZXNba10gPSByZXNWLmNvbmNhdChbdl0pO1xuICAgIH0gZWxzZSBpZiAoQXJyYXkuaXNBcnJheSh2KSkge1xuICAgICAgcmVzW2tdID0gW3Jlc1ZdLmNvbmNhdCh2KTtcbiAgICB9IGVsc2Uge1xuICAgICAgcmVzW2tdID0gW3Jlc1YsIHZdO1xuICAgIH1cbiAgfVxuICByZXR1cm4gcmVzO1xufTtcblxuY29uc3QgaXNWYWxpZFN0eWxlVmFsdWUgPSB2YWx1ZSA9PlxuICB2YWx1ZSA9PT0gbnVsbCB8fFxuICB2YWx1ZSA9PT0gdW5kZWZpbmVkIHx8XG4gICh2YWx1ZSAhPT0gXCJcIiAmJiBbXCJzdHJpbmdcIiwgXCJudW1iZXJcIl0uaW5jbHVkZXModHlwZW9mIHZhbHVlKSk7XG5cbi8vIEdpdmVuIGEgd2luZG93IHdpZHRoLCBjb252ZXJ0IGEgdGhlIHN0eWxlIHRvIGEgU3R5bGVTaGVldCBzdHlsZSwgdXNpbmcgdmFsdWVzIGZyb21cbi8vIHRoZSBoaWdoZXN0IGFuZCBtb3N0IHJlY2VudCBtaW5XaWR0aCBmb3IgZWFjaCBzdHlsZSBrZXksIHdoaWNoIGZpdHMgd2l0aGluIHRoZSBtaW5XaWR0aC5cbi8vXG4vLyBBbHNvIGZpbHRlcnMgdG8gb3V0cHV0IHNwZWNpZmljIHN0eWxlIGtleXMgYmFzZWQgb24gdGhlICdzdHlsZUtleXMnIGFyZ3VtZW50LiBSZXR1cm5zIGFsbCBpZiB1bmRlZmluZWRcbmV4cG9ydCBjb25zdCBhcHBseVdpZHRoID0gKHN0eWxlLCB3aWR0aCwgc3R5bGVLZXlzKSA9PiB7XG4gIGNvbnN0IHJlcyA9IHt9O1xuICBpZiAoIXN0eWxlKSB7XG4gICAgcmV0dXJuIHt9O1xuICB9XG4gIGZvciAoY29uc3QgW2ssIHZdIG9mIE9iamVjdC5lbnRyaWVzKHN0eWxlKSkge1xuICAgIGlmIChBcnJheS5pc0FycmF5KHN0eWxlS2V5cykgJiYgIXN0eWxlS2V5cy5pbmNsdWRlcyhrKSkge1xuICAgICAgY29udGludWU7XG4gICAgfVxuXG4gICAgbGV0IHJlc1Y7XG4gICAgLy8gSWYgdGhlcmUgaXMgYW4gYXJyYXkgb2YgdmFsdWVzLCBjaG9vc2UgdGhlIGxhc3Qgb25lIHdpdGggdGhlIGxhcmdlc3QgbWluV2lkdGhcbiAgICAvLyB3aGljaCBmaXRzIGluIHRoZSBjdXJyZW50IHNjcmVlbiB3aWR0aFxuICAgIGlmIChBcnJheS5pc0FycmF5KHYpKSB7XG4gICAgICBsZXQgbWF4TWluV2lkdGggPSAwO1xuICAgICAgdi5mb3JFYWNoKGlubmVyViA9PiB7XG4gICAgICAgIGNvbnN0IG1pbldpZHRoID0gaW5uZXJWPy5taW5XaWR0aCA/PyAwO1xuICAgICAgICBjb25zdCB2YWx1ZSA9IGlubmVyVj8udmFsdWUgPz8gaW5uZXJWO1xuICAgICAgICBpZiAoXG4gICAgICAgICAgaXNWYWxpZFN0eWxlVmFsdWUodmFsdWUpICYmXG4gICAgICAgICAgbWluV2lkdGggPD0gd2lkdGggJiZcbiAgICAgICAgICBtaW5XaWR0aCA+PSBtYXhNaW5XaWR0aFxuICAgICAgICApIHtcbiAgICAgICAgICByZXNWID0gdmFsdWU7XG4gICAgICAgICAgbWF4TWluV2lkdGggPSBtaW5XaWR0aDtcbiAgICAgICAgfVxuICAgICAgfSk7XG4gICAgICAvLyBPdGhlcndpc2UsIGNoZWNrIGlmIHRoZSB2YWx1ZSBmaXRzIGluIHRoZSBjdXJyZW50IHNjcmVlbiB3aWR0aFxuICAgIH0gZWxzZSB7XG4gICAgICBjb25zdCBtaW5XaWR0aCA9IHY/Lm1pbldpZHRoID8/IDA7XG4gICAgICBjb25zdCB2YWx1ZSA9IHY/LnZhbHVlID8/IHY7XG4gICAgICBpZiAoaXNWYWxpZFN0eWxlVmFsdWUodmFsdWUpICYmIG1pbldpZHRoIDw9IHdpZHRoKSB7XG4gICAgICAgIHJlc1YgPSB2YWx1ZTtcbiAgICAgIH1cbiAgICB9XG4gICAgcmVzW2tdID0gcmVzVjtcbiAgfVxuICByZXR1cm4gcmVzO1xufTtcbiJdLCJtYXBwaW5ncyI6IjJJQUFBO0FBQ0E7QUFDTyxNQUFNQSxNQUFNLEdBQUdBLENBQUFDLE1BQU0sS0FBSUEsTUFBTTs7QUFFdEM7QUFBQUMsT0FBQSxDQUFBRixNQUFBLEdBQUFBLE1BQUEsQ0FDTyxNQUFNRyxPQUFPLEdBQUdBLENBQUNDLE1BQU0sRUFBRUMsTUFBTSxLQUFLO0VBQ3pDLE1BQU1DLEdBQUcsR0FBRyxFQUFFLEdBQUdGLE1BQU0sQ0FBQyxDQUFDO0VBQ3pCLElBQUksQ0FBQ0EsTUFBTSxFQUFFO0lBQ1gsT0FBT0MsTUFBTTtFQUNmO0VBQ0EsSUFBSSxDQUFDQSxNQUFNLEVBQUU7SUFDWCxPQUFPRCxNQUFNO0VBQ2Y7RUFDQSxLQUFLLE1BQU0sQ0FBQ0csQ0FBQyxFQUFFQyxDQUFDLENBQUMsSUFBSUMsTUFBTSxDQUFDQyxPQUFPLENBQUNMLE1BQU0sQ0FBQyxFQUFFO0lBQzNDLElBQUlNLElBQUksR0FBR0wsR0FBRyxDQUFDQyxDQUFDLENBQUM7SUFDakIsSUFBSUksSUFBSSxLQUFLQyxTQUFTLEVBQUU7TUFDdEJOLEdBQUcsQ0FBQ0MsQ0FBQyxDQUFDLEdBQUdDLENBQUM7SUFDWixDQUFDLE1BQU0sSUFBSUssS0FBSyxDQUFDQyxPQUFPLENBQUNILElBQUksQ0FBQyxJQUFJRSxLQUFLLENBQUNDLE9BQU8sQ0FBQ04sQ0FBQyxDQUFDLEVBQUU7TUFDbERGLEdBQUcsQ0FBQ0MsQ0FBQyxDQUFDLEdBQUdJLElBQUksQ0FBQ0ksTUFBTSxDQUFDUCxDQUFDLENBQUM7SUFDekIsQ0FBQyxNQUFNLElBQUlLLEtBQUssQ0FBQ0MsT0FBTyxDQUFDSCxJQUFJLENBQUMsRUFBRTtNQUM5QkwsR0FBRyxDQUFDQyxDQUFDLENBQUMsR0FBR0ksSUFBSSxDQUFDSSxNQUFNLENBQUMsQ0FBQ1AsQ0FBQyxDQUFDLENBQUM7SUFDM0IsQ0FBQyxNQUFNLElBQUlLLEtBQUssQ0FB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

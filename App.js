@@ -1,28 +1,28 @@
 import * as React from 'react';
+import { Provider as ThemeProvider } from '@draftbit/ui';
+import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import {
-  SafeAreaProvider,
-  initialWindowMetrics,
-} from 'react-native-safe-area-context';
-import {
-  View,
-  Text,
-  TextInput,
   ActivityIndicator,
   AppState,
   Platform,
   StatusBar,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { Provider as ThemeProvider } from '@draftbit/ui';
+import {
+  SafeAreaProvider,
+  initialWindowMetrics,
+} from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from 'react-query';
-
 import AppNavigator from './AppNavigator';
-import Draftbit from './themes/Draftbit.js';
-import cacheAssetsAsync from './config/cacheAssetsAsync';
-import { GlobalVariableProvider } from './config/GlobalVariableContext';
-import { useFonts } from 'expo-font';
 import Fonts from './config/Fonts.js';
+import { GlobalVariableProvider } from './config/GlobalVariableContext';
+import cacheAssetsAsync from './config/cacheAssetsAsync';
+import Draftbit from './themes/Draftbit';
+
 SplashScreen.preventAutoHideAsync();
 
 Notifications.setNotificationHandler({
@@ -42,7 +42,8 @@ const App = () => {
     Inter_300Light: Fonts.Inter_300Light,
     Inter_400Regular: Fonts.Inter_400Regular,
     Inter_500Medium: Fonts.Inter_500Medium,
-    Inter_700Bold: Fonts.Inter_700Bold,
+    Inter_600SemiBold: Fonts.Inter_600SemiBold,
+    Poppins_400Regular: Fonts.Poppins_400Regular,
   });
 
   React.useEffect(() => {
@@ -80,7 +81,7 @@ const App = () => {
           <ThemeProvider
             themes={[Draftbit]}
             breakpoints={{}}
-            initialThemeName={Draftbit.name}
+            initialThemeName={'Draftbit'}
           >
             <AppNavigator />
           </ThemeProvider>

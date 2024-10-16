@@ -5,8 +5,8 @@ const openShare = text => {
   const isIOS = Platform.OS === 'ios';
 
   Share.share({
-    url: isIOS && isUrl ? text : null,
-    message: !isIOS || !isUrl ? text : null,
+    url: isIOS && isUrl ? text : undefined,
+    message: !isIOS || !isUrl ? text : undefined,
   });
 };
 

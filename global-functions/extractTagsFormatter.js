@@ -1,5 +1,3 @@
-import React from 'react';
-
 const extractTagsFormatter = tagsArray => {
   // Ensure the input is an array
   if (!Array.isArray(tagsArray)) {

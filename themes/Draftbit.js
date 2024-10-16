@@ -19,10 +19,9 @@ export default createTheme({
       },
       foreground: { brand: palettes.Brand.Light, danger: palettes.Brand.Light },
       text: {
-        strong: palettes.Brand.Strong,
-        medium: {},
-        light: palettes.Brand.Light,
         danger: palettes.Brand.Error,
+        light: palettes.Brand.Light,
+        strong: palettes.Brand.Text,
       },
     },
     typography: {
